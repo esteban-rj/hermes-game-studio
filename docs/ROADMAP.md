@@ -26,10 +26,10 @@ Aceptación: dos tareas en juegos distintos no comparten memoria ni permisos; fa
 
 ## Fase 4: voz, avatar y experiencia
 
-Primero voz sobre el agente textual (transcripción, Hermes, síntesis); evaluar Realtime si la latencia exige conversación continua. La voz identifica agente/proyecto, puede interrumpir y pide aclaración para órdenes ambiguas. Las confirmaciones de acciones con efectos deben mostrar el texto entendido y su alcance. Añadir avatar basado en la foto aportada y animaciones.
+El avatar personal y sus cuatro orientaciones ya están integrados en Canvas. Para voz: primero transcripción sobre el agente textual y síntesis; evaluar Realtime si la latencia exige conversación continua. La voz identifica agente/proyecto, puede interrumpir y pide aclaración para órdenes ambiguas. Las confirmaciones de acciones con efectos deben mostrar el texto entendido y su alcance.
 
 Aceptación: micrófono sólo con acción del usuario, claves sólo backend, interrupción cancela audio y run correspondiente, no se ejecuta dos veces una orden, presupuesto y retención configurados. No asumir que la sesión de voz de Codex sea una API embebible.
 
 ## Decisiones pendientes
 
-Proveedor/modelos y techo de gasto; versión/instalación de Hermes; primer juego piloto y tarea; aplicaciones/herramientas que el puente puede abrir; política de aprobación para commits/push de los juegos; foto y dirección visual final; STT/TTS o Realtime. Ninguna impide revisar la demo actual.
+Proveedor/modelos y techo de gasto; versión/instalación de Hermes; primer juego piloto y tarea; aplicaciones/herramientas que el puente puede abrir; política de aprobación para commits/push de los juegos; dirección visual final; STT/TTS o Realtime. Ninguna impide revisar la demo actual.

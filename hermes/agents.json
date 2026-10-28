@@ -114,7 +114,7 @@
         "Herramienta de inspección de imágenes; exportador del motor."
       ],
       "limits": [
-        "La foto del usuario aún no se ha recibido: avatar genérico explícito.",
+        "Usar referencias personales sólo para el propósito autorizado; si faltan, identificar el avatar como provisional.",
         "No prometer imagen generada si sólo existe un brief.",
         "No instalar generadores ni consumir créditos sin presupuesto configurado."
       ],

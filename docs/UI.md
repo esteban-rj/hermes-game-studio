@@ -29,7 +29,9 @@ En pantallas de menos de 820 px se muestran controles táctiles. Los tabs admite
 | Vera | Chaqueta turquesa, diadema y tableta | Diseño UX, brief y validación de experiencia |
 | Nodo | Chaleco verde | Coordinación y aislamiento de contexto |
 | Lupa | Abrigo amarillo y lupa | Verificación independiente |
-| Tú | Camiseta verde clara | Avatar provisional, pendiente de tu foto |
+| Tú | Avatar pixel personalizado | Cuatro orientaciones y animación de pasos, derivado de una referencia autorizada |
+
+El jugador se dibuja con un módulo Canvas independiente de los seis agentes. La referencia original no se distribuye ni se versiona. Las partes no visibles en la referencia son decisiones de diseño para completar el personaje; no se presentan como datos observados.
 
 ## Estado real
 

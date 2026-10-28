@@ -8,6 +8,7 @@ Fecha local: 27 de octubre de 2026. Entorno observado: Windows, Node.js 24.22.1.
 | node --test | PASS: 5/5 pruebas, incluidas HTTP/SSE y cadena UX con dependencias |
 | Navegador local | PASS: interfaz renderiza, seis personajes/mesas y sin errores/warnings de la aplicación |
 | Proximidad | PASS: caminar desde entrada hasta mesa de Vera y pulsar E selecciona a su ocupante y muestra nombre/rol |
+| Avatar personalizado | PASS: frente, espalda y ambos perfiles comprobados en la oficina; desplazamiento, colisión e interacción E conservados; los seis NPC mantienen su dibujo |
 | Conversación | PASS: enviar mensaje a Pixel muestra respuesta predefinida marcada DEMO |
 | Voz demo | PASS: entra en Escucha DEMO; cambiar a Pixel cancela y vuelve a Desconectada, sin micrófono/audio |
 | Cadena UX | PASS: petición única conserva texto y criterios durante cinco traspasos; cierre y cinco registros marcados simulados |
@@ -25,3 +26,5 @@ Las primeras pruebas HTTP dentro del sandbox no podían conectar al loopback (EA
 La revisión visual cubrió el navegador de escritorio y la mesa UX. No es una matriz completa de navegadores, accesibilidad, dispositivos ni colisiones de todo el mapa. No hubo prueba de micrófono, audio, generación de assets, ejecución de aplicaciones, Kanban durable, tool calls Hermes, facturación ni trabajo real en repositorios de juegos. Los esquemas son documentación contractual y la demo tiene validación específica, no un motor JSON Schema genérico.
 
 La evidencia demo nunca acredita código generado, pruebas del juego o aprobación UX real. Los homes preparados son fixtures; no se configuró proveedor/modelo operativo ni se copió autenticación. El handshake de Codex sólo comprueba el protocolo local y no demuestra acceso a modelos o saldo.
+
+La ampliación del avatar usa dibujo Canvas nativo en un módulo exclusivo del jugador y en su mini retrato. Se revisó la interfaz sin errores/warnings y se repitieron las cinco pruebas y el check estático. La referencia original no se incorporó a los archivos del repositorio. La personalización visual está integrada; voz y Hermes continúan en modo demo/desconectados.

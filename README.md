@@ -15,7 +15,7 @@ node server.mjs
 
 Abre **http://127.0.0.1:4317**. También puedes ejecutar `./Launch.ps1` desde PowerShell. Si el puerto está ocupado, usa `$env:STUDIO_PORT = '4318'` antes de iniciar. Detén el servidor con Ctrl+C. `.env.example` es documentación: la demo no carga archivos .env automáticamente.
 
-Camina con WASD o flechas, acércate a un personaje y pulsa E. La lista del equipo ofrece la misma interacción sin caminar. El avatar del usuario es provisional: se personalizará cuando aporte su foto. No se inventó su apariencia.
+Camina con WASD o flechas, acércate a un personaje y pulsa E. La lista del equipo ofrece la misma interacción sin caminar. El avatar del jugador está personalizado a partir de una referencia autorizada, con cuatro orientaciones y animación al caminar. La referencia original queda fuera de Git.
 
 Cada agente tiene su propia mesa rotulada. Acércate a la mesa y pulsa E para abrir a su ocupante. El panel muestra el agente activo. «Probar voz · DEMO» ilustra estados de escucha y respuesta sólo con texto, sin micrófono ni audio real; cambiar de agente o proyecto cancela esa prueba.
 
@@ -62,7 +62,7 @@ Memoria, conversaciones, sesiones, claves y fotos privadas quedan fuera de Git. 
 2. **Una conexión real:** instalar/configurar Hermes en un entorno elegido, seleccionar proveedor/modelos y presupuesto, crear homes aislados y conectar un agente de sólo lectura. La UI deberá mostrar `real` únicamente con evidencia del runtime.
 3. **Primer trabajo de código:** tarea pequeña en un worktree dedicado, descubriendo el motor y las convenciones del proyecto; Hermes orquesta y Codex puede ser una herramienta de código. Diff, pruebas, cancelación, permisos y aprobación antes de acciones externas sensibles.
 4. **Equipo y arte:** añadir traspasos, QA independiente, generación de assets con procedencia y revisión visual; limitar concurrencia y reintentos.
-5. **Voz y personalización:** avatar desde la foto, STT → Hermes → TTS o Realtime como capa de conversación, control de interrupciones y confirmación de órdenes de voz con efectos.
+5. **Voz y experiencia:** STT → Hermes → TTS o Realtime como capa de conversación, control de interrupciones y confirmación de órdenes de voz con efectos. El avatar personal ya está integrado; la voz sigue pendiente.
 
 El alcance y los criterios para cada fase están en [ROADMAP.md](docs/ROADMAP.md). La arquitectura conserva a Hermes como runtime de agentes; la UI y Codex son capas separadas.
 

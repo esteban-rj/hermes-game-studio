@@ -1,7 +1,11 @@
+import { drawPlayerAvatar } from './avatar.js';
+
 const $ = (selector) => document.querySelector(selector);
 const canvas = $('#office');
 const ctx = canvas.getContext('2d');
 ctx.imageSmoothingEnabled = false;
+const avatarPortrait = $('#player-portrait');
+drawPlayerAvatar(avatarPortrait.getContext('2d'), 16, 41, { scale: 1.6 });
 const state = { agents: [], tasks: [], projects: [], requests: [], selected: null, project: 'studio', chats: new Map(), events: [], connected: false, tab: 'chat' };
 const spots = { atlas: { x: 170, y: 223 }, pixel: { x: 355, y: 223 }, prisma: { x: 655, y: 223 }, nodo: { x: 170, y: 392 }, ux: { x: 416, y: 392 }, lupa: { x: 655, y: 392 } };
 const desks = { atlas: { x: 102, y: 133, w: 134, h: 62 }, pixel: { x: 286, y: 133, w: 134, h: 62 }, prisma: { x: 588, y: 133, w: 134, h: 62 }, nodo: { x: 102, y: 304, w: 134, h: 62 }, ux: { x: 349, y: 304, w: 134, h: 62 }, lupa: { x: 588, y: 304, w: 134, h: 62 } };
@@ -548,8 +552,8 @@ function draw(now) {
   characters.push({ isPlayer: true, x: player.x, y: player.y });
   characters.sort((a, b) => a.y - b.y).forEach(character => {
     if (character.isPlayer) {
-      drawCharacter(ctx, player.x, player.y, '#c1d393', 'player', player.facing, player.walking ? now / 95 : 0, 2);
-      pixelText('TÚ', player.x, player.y - 48, '#eef3d5', 8);
+      drawPlayerAvatar(ctx, player.x, player.y, { facing: player.facing, step: player.walking ? now / 95 : 0, scale: 2 });
+      pixelText('TÚ', player.x, player.y - 55, '#eef3d5', 8);
     } else {
       const { agent, x, y } = character;
       if (agent.id === state.selected) {
