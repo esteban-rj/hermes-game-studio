@@ -2,6 +2,8 @@
 
 Una oficina pixel art para conversar con un equipo de agentes de **Hermes Agent (Nous Research)** y desarrollar videojuegos con tareas, memoria y evidencia separadas por proyecto.
 
+La oficina combina madera cálida, tejido y vegetación con texturas originales dibujadas en Canvas. Ver [dirección de materiales](docs/TEXTURES.md).
+
 **v0.1 · base inicial, modo DEMO.** La oficina, el servidor HTTP, los eventos SSE y el tablero de tareas funcionan localmente. Las respuestas son predefinidas y las transiciones de tareas son manuales. Hermes, Codex y voz todavía no están conectados a la oficina. No se ejecutan modelos ni aplicaciones desde la interfaz.
 
 ## Abrir la oficina

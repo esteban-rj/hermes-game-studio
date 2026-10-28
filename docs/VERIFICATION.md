@@ -9,6 +9,7 @@ Fecha local: 27 de octubre de 2026. Entorno observado: Windows, Node.js 24.22.1.
 | Navegador local | PASS: interfaz renderiza, seis personajes/mesas y sin errores/warnings de la aplicación |
 | Proximidad | PASS: caminar desde entrada hasta mesa de Vera y pulsar E selecciona a su ocupante y muestra nombre/rol |
 | Avatar personalizado | PASS: frente, espalda y ambos perfiles comprobados en la oficina; desplazamiento, colisión e interacción E conservados; los seis NPC mantienen su dibujo |
+| Materiales cálidos | PASS: entorno renderizado con texturas deterministas y nombres legibles; recorrido hasta la mesa UX e interacción E comprobados, sin errores/warnings de la aplicación |
 | Conversación | PASS: enviar mensaje a Pixel muestra respuesta predefinida marcada DEMO |
 | Voz demo | PASS: entra en Escucha DEMO; cambiar a Pixel cancela y vuelve a Desconectada, sin micrófono/audio |
 | Cadena UX | PASS: petición única conserva texto y criterios durante cinco traspasos; cierre y cinco registros marcados simulados |
@@ -28,3 +29,5 @@ La revisión visual cubrió el navegador de escritorio y la mesa UX. No es una m
 La evidencia demo nunca acredita código generado, pruebas del juego o aprobación UX real. Los homes preparados son fixtures; no se configuró proveedor/modelo operativo ni se copió autenticación. El handshake de Codex sólo comprueba el protocolo local y no demuestra acceso a modelos o saldo.
 
 La ampliación del avatar usa dibujo Canvas nativo en un módulo exclusivo del jugador y en su mini retrato. Se revisó la interfaz sin errores/warnings y se repitieron las cinco pruebas y el check estático. La referencia original no se incorporó a los archivos del repositorio. La personalización visual está integrada; voz y Hermes continúan en modo demo/desconectados.
+
+La revisión de materiales separa el entorno en public/room.js y conserva la lógica de movimiento, los obstáculos y los personajes. Se repitieron el check estático y las cinco pruebas después de integrarlo. La revisión visual detectó que los nombres centrados quedaban parcialmente ocultos por los ocupantes; se movieron al extremo del canto y se comprobó su legibilidad en la escena final. Las vistas previas anteriores se conservan con nombres distintos.

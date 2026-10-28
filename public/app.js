@@ -1,3 +1,4 @@
+import { drawStudioRoom } from './room.js';
 import { drawPlayerAvatar } from './avatar.js';
 
 const $ = (selector) => document.querySelector(selector);
@@ -412,83 +413,8 @@ function pixelText(text, x, y, color = '#e9e6cf', size = 8, align = 'center') {
   ctx.fillStyle = color;
   ctx.fillText(text, Math.round(x), Math.round(y));
 }
-function plant(x, y, big = false) {
-  const s = big ? 1.5 : 1;
-  ctx.save(); ctx.translate(x, y); ctx.scale(s, s);
-  rect(ctx, -8, -2, 16, 4, '#314438');
-  rect(ctx, -6, -13, 12, 12, '#b99576'); rect(ctx, -7, -14, 14, 4, '#d2af81');
-  rect(ctx, -1, -34, 3, 22, '#668150'); rect(ctx, -10, -29, 10, 8, '#54754e'); rect(ctx, -13, -33, 10, 7, '#759252');
-  rect(ctx, 2, -34, 11, 8, '#61864e'); rect(ctx, 5, -39, 7, 7, '#91a969'); rect(ctx, -5, -44, 8, 16, '#7e9b5f');
-  ctx.restore();
-}
-function desk(x, y, variant) {
-  rect(ctx, x + 5, y + 8, 130, 62, '#606b4e66');
-  rect(ctx, x + 3, y + 45, 8, 23, '#6d684c'); rect(ctx, x + 119, y + 45, 8, 23, '#6d684c');
-  rect(ctx, x, y, 134, 56, '#c1a67c'); rect(ctx, x, y + 48, 134, 8, '#9c805d'); rect(ctx, x + 3, y + 3, 128, 3, '#dac093');
-  rect(ctx, x + 44, y + 9, 43, 30, '#303d39'); rect(ctx, x + 47, y + 12, 37, 23, '#4d7472');
-  rect(ctx, x + 50, y + 15, 22, 2, '#9bb9a2'); rect(ctx, x + 50, y + 20, 30, 2, '#80a494'); rect(ctx, x + 50, y + 25, 15, 2, '#b8c78f');
-  if (variant === 'prisma') { rect(ctx, x + 50, y + 15, 11, 14, '#d99b8a'); rect(ctx, x + 65, y + 16, 14, 9, '#b4a0d5'); }
-  rect(ctx, x + 61, y + 39, 8, 4, '#3a4840'); rect(ctx, x + 51, y + 43, 30, 3, '#37473d');
-  rect(ctx, x + 45, y + 48, 45, 4, '#6d7d69'); rect(ctx, x + 48, y + 49, 38, 1, '#b1b99a');
-  rect(ctx, x + 104, y + 32, 10, 12, '#dfd3ae'); rect(ctx, x + 106, y + 30, 6, 4, '#66543f'); rect(ctx, x + 114, y + 35, 3, 6, '#dfd3ae');
-  if (variant === 'prisma') { rect(ctx, x + 13, y + 20, 21, 27, '#e4ddba'); rect(ctx, x + 16, y + 24, 15, 10, '#c5988e'); rect(ctx, x + 19, y + 37, 10, 3, '#91ad80'); }
-  else { rect(ctx, x + 14, y + 30, 20, 16, '#a4b087'); rect(ctx, x + 17, y + 33, 14, 1, '#d6d6ad'); rect(ctx, x + 17, y + 37, 11, 1, '#d6d6ad'); }
-  const owner = state.agents.find(agent => agent.id === variant);
-  rect(ctx, x + 39, y + 52, 57, 12, '#334b3e');
-  pixelText((owner?.name || variant).toUpperCase(), x + 67, y + 61, colors[variant] || '#d9e3be', 8);
-  if (owner?.id === state.selected) { rect(ctx, x + 34, y + 55, 3, 3, colors[variant] || '#d9e3be'); }
-}
-function chair(x, y, color = '#637664') {
-  rect(ctx, x - 13, y - 6, 27, 14, '#495f4b'); rect(ctx, x - 12, y - 20, 25, 19, color); rect(ctx, x - 9, y - 18, 19, 3, '#a4b28b44');
-  rect(ctx, x - 2, y + 7, 4, 10, '#56634c'); rect(ctx, x - 10, y + 16, 21, 3, '#56634c');
-}
 function drawRoom() {
-  rect(ctx, 0, 0, 832, 512, '#243331');
-  rect(ctx, 24, 45, 784, 444, '#172725');
-  rect(ctx, 34, 54, 764, 421, '#546b5a');
-  // Wood floor: aligned pixels and subtle grain, never random per frame.
-  for (let y = 105; y < 465; y += 24) {
-    for (let x = 44; x < 790; x += 64) {
-      const offset = (Math.floor(y / 24) % 2) * 32;
-      const px = x - offset;
-      rect(ctx, Math.max(44, px), y, Math.min(64, 790 - Math.max(44, px)), 23, ['#a59d75', '#aea77e', '#aaa078'][(Math.floor(x / 64) + Math.floor(y / 24)) % 3]);
-      if (px > 44) rect(ctx, px + 7, y + 14, 22, 1, '#817f5b33');
-      if (px + 63 < 790 && px + 63 > 44) rect(ctx, px + 63, y + 1, 1, 22, '#7e805d');
-    }
-  }
-  rect(ctx, 34, 54, 764, 51, '#b9c8a8'); rect(ctx, 34, 54, 764, 8, '#879d80'); rect(ctx, 34, 97, 764, 8, '#6f8769');
-  rect(ctx, 34, 105, 10, 362, '#7a8f6e'); rect(ctx, 788, 105, 10, 362, '#7a8f6e');
-  rect(ctx, 34, 466, 764, 9, '#6d7f5d'); rect(ctx, 34, 475, 764, 6, '#405644');
-  // Windows and outside skyline.
-  [84, 289, 588].forEach(x => {
-    rect(ctx, x - 5, 56, 124, 42, '#718f7b'); rect(ctx, x, 58, 114, 34, '#89b9aa');
-    rect(ctx, x, 79, 114, 13, '#6e9e91');
-    for (let k = 0; k < 6; k++) rect(ctx, x + 3 + k * 19, 70 + k % 3 * 3, 13, 22 - k % 3 * 3, '#779c8c');
-    rect(ctx, x + 55, 58, 4, 35, '#d8debb'); rect(ctx, x, 73, 114, 3, '#c1d2b4'); rect(ctx, x - 4, 92, 122, 6, '#dfdfb7');
-  });
-  rect(ctx, 457, 61, 79, 30, '#465f4f'); rect(ctx, 461, 65, 71, 22, '#e1dfb9'); pixelText('MAKE / PLAY', 496, 79, '#5e7858', 8);
-  // Shelves, books and coffee station.
-  rect(ctx, 449, 100, 96, 31, '#8a8966'); rect(ctx, 449, 97, 96, 7, '#c0b687');
-  [0, 1, 2, 3].forEach(i => { rect(ctx, 456 + i * 6, 111, 4, 15, ['#a5bb8d', '#d1b783', '#8dafa2', '#b1a0bb'][i]); });
-  rect(ctx, 509, 102, 22, 23, '#4c5f4f'); rect(ctx, 512, 104, 15, 12, '#a2ab85'); rect(ctx, 517, 118, 8, 6, '#d5c29b');
-  // A sixth individual desk for UX, on a quiet central carpet.
-  rect(ctx, 321, 266, 189, 99, '#758f7966'); rect(ctx, 327, 272, 177, 87, '#83987b');
-  rect(ctx, 333, 278, 165, 75, '#9cad8b'); rect(ctx, 338, 283, 155, 65, '#8fa280');
-  desk(102, 133, 'atlas'); desk(286, 133, 'pixel'); desk(588, 133, 'prisma'); desk(102, 304, 'nodo'); desk(349, 304, 'ux'); desk(588, 304, 'lupa');
-  [170, 355, 655].forEach(x => chair(x, 216)); chair(170, 386); chair(416, 386, '#658d81'); chair(655, 386);
-  // Focus alcoves and wall decor.
-  rect(ctx, 250, 124, 4, 102, '#7f946c'); rect(ctx, 548, 124, 4, 102, '#7f946c');
-  plant(67, 161, 1); plant(765, 165, true); plant(69, 442, true); plant(763, 442, true);
-  rect(ctx, 54, 281, 25, 28, '#567c62'); rect(ctx, 58, 285, 17, 20, '#d4c999'); rect(ctx, 62, 290, 10, 7, '#a5b77c');
-  rect(ctx, 751, 267, 25, 33, '#7b8e6b'); rect(ctx, 755, 271, 17, 25, '#d4cf9e'); rect(ctx, 758, 274, 11, 12, '#99b296');
-  // Entrance and floor signs.
-  rect(ctx, 366, 455, 100, 20, '#344e40'); rect(ctx, 373, 456, 86, 15, '#7d926b');
-  pixelText('ENTRADA', 416, 466, '#d9e0b8', 7);
-  pixelText('ARQUITECTURA', 169, 121, '#e8e7ca', 7); pixelText('DESARROLLO', 354, 121, '#e8e7ca', 7); pixelText('ARTE / MUNDOS', 655, 121, '#e8e7ca', 7);
-  pixelText('COORDINACIÓN', 169, 290, '#e8e7ca', 7); pixelText('DISEÑO UX', 416, 290, '#e8e7ca', 7); pixelText('CONTROL DE CALIDAD', 655, 290, '#e8e7ca', 7);
-  // Quiet environmental details: papers, pathway and plants.
-  rect(ctx, 269, 388, 13, 4, '#767f5c44'); rect(ctx, 523, 237, 13, 4, '#767f5c44');
-  pixelText('HERMES', 416, 242, '#647f61', 16); pixelText('GAME STUDIO', 416, 254, '#6a8360', 7);
+  drawStudioRoom(ctx, { agents: state.agents, selected: state.selected, colors });
 }
 function drawCharacter(context, x, y, color, kind, facing = 'down', step = 0, scale = 2) {
   context.save(); context.translate(Math.round(x), Math.round(y)); context.scale(scale, scale);

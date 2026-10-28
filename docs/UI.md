@@ -2,6 +2,8 @@
 
 La UI usa HTML, CSS y Canvas 2D sin bibliotecas, fuentes remotas ni assets descargados. El servidor local entrega `public/`. Los píxeles del mapa y de los personajes se dibujan con código propio: todavía no son un pipeline de producción de sprites.
 
+La oficina usa madera cálida, superficies con vetas, herrajes, tejidos y vegetación. La dirección de materiales y su referencia están documentadas en [TEXTURES.md](TEXTURES.md); el entorno y los personajes se dibujan por separado.
+
 El estudio es independiente de los juegos existentes del usuario. **Juego A** y **Juego B** son proyectos ficticios de demostración recibidos del backend; no se configuran rutas a repositorios reales ni se presupone un motor de juego.
 
 ## Recorrido
