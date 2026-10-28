@@ -12,4 +12,10 @@ Referencia estética solicitada: los interiores cálidos y artesanales de Starde
 
 El render del entorno está separado en public/room.js. La capa estática se conserva en un canvas auxiliar; las placas y la selección se dibujan con el estado actual. La textura es determinista y no cambia al caminar o al refrescar los eventos.
 
-La geometría de la oficina, las colisiones, las seis mesas y los personajes se mantienen. El avatar personal se dibuja desde su propio módulo. La renovación de materiales es visual; no conecta Hermes, voz ni herramientas reales.
+La geometría de la oficina, las colisiones y las seis mesas se mantienen. El avatar personal se dibuja desde su propio módulo. La renovación de materiales es visual; no conecta Hermes, voz ni herramientas reales.
+
+## Personajes y objetos
+
+La dirección se extiende a los personajes y sus retratos: silueta humanoide, cabeza y cuello legibles, cabello por mechones, contorno oscuro, ropa con pliegues y accesorios propios de cada rol. Los sprites comparten proporciones y sombreado; el avatar personal conserva los rasgos de la referencia autorizada. Los retratos usan un canvas más alto para mostrar el cuerpo completo.
+
+Los objetos combinan siluetas escalonadas con varios tonos: terracota, follaje agrupado, cerámica, páginas y lomos de libros, tapizado y biseles. Cada mesa incorpora útiles relacionados con su rol. Los cambios de dibujo conservan el ancla de los personajes y las áreas de interacción.

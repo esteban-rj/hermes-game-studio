@@ -65,6 +65,24 @@ function frame(context, x, y, width, height, fill, border = ink, thickness = 2) 
   rect(context, x + thickness, y + thickness, width - thickness * 2, height - thickness * 2, fill);
 }
 
+// Siluetas curvas construidas por filas enteras: no hay trazos suavizados.
+function pixelOval(context, x, y, width, height, color) {
+  for (let row = 0; row < height; row++) {
+    const unitY = (row + .5 - height / 2) / (height / 2);
+    const half = Math.sqrt(Math.max(0, 1 - unitY * unitY)) * width / 2;
+    const inset = Math.max(0, Math.round(width / 2 - half));
+    rect(context, x + inset, y + row, width - inset * 2, 1, color);
+  }
+}
+
+function softBox(context, x, y, width, height, radius, color) {
+  for (let row = 0; row < height; row++) {
+    const corner = Math.min(row, height - 1 - row);
+    const offset = corner < radius ? radius - corner - 1 : 0;
+    rect(context, x + offset, y + row, width - offset * 2, 1, color);
+  }
+}
+
 function woodGrain(context, x, y, width, height, seed, light = '#e8b672', dark = '#a66b3e') {
   for (let row = 3; row < height - 2; row += 5) {
     const n = hash(seed, row);
@@ -116,10 +134,15 @@ function drawFloor(context) {
 }
 
 function leaf(context, x, y, size, tone) {
-  rect(context, x + 2, y, size - 4, 2, tone);
-  rect(context, x, y + 2, size, Math.max(2, size - 4), tone);
-  rect(context, x + 2, y + size - 2, size - 4, 2, tone);
-  rect(context, x + 2, y + 2, Math.max(2, size - 5), 1, '#a6c460');
+  const h = Math.round(size * .78);
+  pixelOval(context, x, y + 2, size, h, '#3b6534');
+  pixelOval(context, x + 1, y + 1, size - 2, h - 1, tone);
+  pixelOval(context, x + Math.round(size * .27), y, Math.round(size * .58), Math.round(size * .6), tone);
+  pixelOval(context, x + 2, y + 2, Math.max(3, Math.round(size * .5)), 3, '#b3ca6a80');
+  rect(context, x + 3, y + h - 1, 3, 1, '#446f37');
+  rect(context, x + 5, y + h - 2, 3, 1, '#bed477');
+  rect(context, x + 8, y + h - 3, 2, 1, '#bed477');
+  rect(context, x + size - 2, y + 3, 2, 2, tone);
 }
 
 function gardenWindow(context, x, y, variant) {
@@ -157,30 +180,40 @@ function gardenWindow(context, x, y, variant) {
 
 function plant(context, x, y, scale = 1) {
   context.save(); context.translate(x, y); context.scale(scale, scale);
-  rect(context, -9, 0, 20, 3, '#5c3a2b44');
-  rect(context, -7, -13, 15, 13, ink);
-  rect(context, -6, -12, 13, 10, '#b65f3b');
-  rect(context, -4, -11, 8, 10, '#d47a48');
-  rect(context, -3, -9, 2, 6, '#e39759');
-  rect(context, -8, -16, 17, 5, ink);
-  rect(context, -7, -15, 15, 3, '#dc8a4d');
-  rect(context, -5, -15, 11, 2, '#573d2a');
-  rect(context, -1, -34, 2, 21, '#3e652f');
+  pixelOval(context, -10, -1, 22, 5, '#5c3a2b44');
+  const widths = [15, 15, 15, 15, 13, 13, 13, 11, 11, 11, 9, 7];
+  widths.forEach((width, row) => {
+    const left = Math.round(-width / 2);
+    rect(context, left, -13 + row, width, 1, '#78432c');
+    rect(context, left + 1, -13 + row, width - 2, 1, '#bc653e');
+    if (row < 9) rect(context, left + 2, -13 + row, 2, 1, '#e49a5d');
+    if (row > 1 && row < 10) rect(context, -1, -13 + row, 3, 1, '#cf7b46');
+  });
+  pixelOval(context, -9, -17, 19, 7, '#75432c');
+  pixelOval(context, -8, -17, 17, 5, '#e49a59');
+  pixelOval(context, -6, -16, 13, 3, '#573d2a');
+  rect(context, -6, -13, 12, 1, '#f1b16b');
+  rect(context, -1, -32, 2, 18, '#456d31');
+  rect(context, -5, -29, 5, 1, '#456d31'); rect(context, 0, -34, 7, 1, '#456d31');
   const leaves = [
-    [-11, -30, 11, '#467c39'], [1, -32, 12, '#538b3d'], [-7, -40, 12, '#75a641'],
-    [-16, -37, 12, '#679a3e'], [5, -41, 11, '#8bb54c'], [-5, -49, 12, '#69983f'],
-    [-1, -44, 12, '#a3be58'],
+    [-13, -29, 12, '#4e833d'], [1, -30, 13, '#659a45'], [-7, -38, 13, '#75a641'],
+    [-16, -36, 12, '#6c9e43'], [4, -40, 12, '#8bb54c'], [-6, -48, 12, '#69983f'],
+    [-1, -44, 13, '#9eba52'],
   ];
   leaves.forEach(([lx, ly, size, tone]) => leaf(context, lx, ly, size, tone));
-  rect(context, -1, -44, 1, 15, '#c0cc70');
-  rect(context, 7, -38, 5, 1, '#c0cc70');
+  rect(context, -1, -39, 1, 10, '#bed477');
+  rect(context, 2, -33, 4, 1, '#bed477');
   context.restore();
 }
 
 function monitor(context, x, y, role) {
-  rect(context, x + 3, y + 4, 47, 30, '#674d3544');
-  frame(context, x, y, 47, 30, '#343c39');
-  rect(context, x + 2, y + 2, 43, 1, '#6c7766');
+  pixelOval(context, x + 5, y + 26, 44, 10, '#674d3540');
+  softBox(context, x, y, 47, 31, 4, '#4e3d2c');
+  softBox(context, x + 1, y + 1, 45, 28, 3, '#8c8f76');
+  softBox(context, x + 2, y + 2, 43, 26, 2, '#d1c7a2');
+  rect(context, x + 4, y + 3, 38, 1, '#f3e5bc');
+  rect(context, x + 2, y + 5, 1, 19, '#ede0b4');
+  softBox(context, x + 3, y + 4, 41, 22, 2, '#405246');
   rect(context, x + 4, y + 4, 39, 21, '#2b5551');
   const sx = x + 6; const sy = y + 6;
   if (role === 'atlas') {
@@ -221,21 +254,110 @@ function monitor(context, x, y, role) {
       rect(context, sx + 10, sy + 3 + i * 5, 19 - i * 3, 1, '#728e69');
     });
   }
-  rect(context, x + 39, y + 27, 2, 1, '#9ac56a');
-  rect(context, x + 20, y + 30, 7, 5, ink);
-  rect(context, x + 21, y + 30, 4, 4, '#647364');
-  rect(context, x + 11, y + 34, 27, 3, ink);
-  rect(context, x + 13, y + 34, 23, 1, '#82917a');
+  // Reflejo de cristal escalonado, bisel inferior y pie de forma redondeada.
+  rect(context, x + 5, y + 5, 9, 1, '#f2f2ca60');
+  rect(context, x + 5, y + 6, 6, 2, '#f2f2ca30');
+  rect(context, x + 40, y + 7, 2, 9, '#d5e3bc35');
+  rect(context, x + 39, y + 26, 2, 2, '#88a95d');
+  rect(context, x + 21, y + 27, 5, 1, '#857d60');
+  softBox(context, x + 20, y + 30, 7, 6, 2, '#6c6e55');
+  rect(context, x + 21, y + 30, 2, 4, '#b0ac89');
+  pixelOval(context, x + 10, y + 33, 29, 5, '#675740');
+  pixelOval(context, x + 12, y + 33, 25, 3, '#b5b28c');
+  rect(context, x + 17, y + 34, 15, 1, '#d8d2a5');
 }
 
 function book(context, x, y, cover, vertical = false) {
   const width = vertical ? 7 : 23; const height = vertical ? 20 : 16;
-  frame(context, x, y, width, height, cover, ink, 1);
-  rect(context, x + 2, y + height - 4, width - 3, 2, '#ecdbb1');
-  rect(context, x + 1, y + 1, 1, height - 3, '#f2d5a175');
+  softBox(context, x + 1, y + 2, width, height, 2, '#6a493530');
+  softBox(context, x, y, width, height, 2, ink);
+  rect(context, x + 1, y + 1, width - 2, height - 3, cover);
+  rect(context, x + 2, y + height - 5, width - 3, 3, '#e4d1a5');
+  rect(context, x + 3, y + height - 4, width - 4, 1, '#baa27b');
+  rect(context, x + 1, y + 1, 2, height - 3, '#f2d5a175');
+  rect(context, x + 3, y + 1, width - 5, 1, '#f2d5a145');
+  rect(context, x + 2, y + height - 2, width - 2, 1, cover);
   if (!vertical) {
-    rect(context, x + 5, y + 4, width - 10, 1, '#edd6a8');
-    rect(context, x + 7, y + 7, width - 14, 1, '#edd6a8');
+    rect(context, x + 5, y + 3, width - 10, 1, '#edd6a8');
+    rect(context, x + 6, y + 6, width - 12, 1, '#edd6a8');
+    rect(context, x + width - 7, y + height - 4, 2, 5, '#b76353');
+  } else {
+    rect(context, x + 2, y + 4, 3, 1, '#f2dca9');
+    rect(context, x + 2, y + 12, 3, 1, '#f2dca9');
+  }
+}
+
+function ceramicMug(context, x, y, glaze) {
+  pixelOval(context, x - 2, y + 11, 18, 5, '#79513a35');
+  pixelOval(context, x - 2, y + 10, 17, 4, '#e5c38c');
+  pixelOval(context, x + 8, y + 2, 8, 9, ink);
+  pixelOval(context, x + 9, y + 3, 6, 7, glaze);
+  pixelOval(context, x + 11, y + 4, 3, 4, '#dba567');
+  softBox(context, x, y + 2, 12, 11, 3, ink);
+  softBox(context, x + 1, y + 3, 10, 9, 3, glaze);
+  rect(context, x + 2, y + 5, 2, 5, '#ffdfab70');
+  pixelOval(context, x - 1, y, 14, 5, '#e5c99a');
+  pixelOval(context, x + 1, y + 1, 10, 3, '#75432a');
+  pixelOval(context, x + 3, y + 1, 6, 2, '#a56c3e');
+  rect(context, x + 2, y + 1, 3, 1, '#edc487');
+}
+
+function roleTools(context, x, y, role) {
+  // Todos estos útiles viven sobre la mesa, sin ocupar nuevos pasos del mapa.
+  if (role === 'atlas') {
+    softBox(context, x + 9, y + 23, 25, 21, 2, '#846143');
+    rect(context, x + 10, y + 24, 23, 17, '#e9d9ae');
+    rect(context, x + 12, y + 25, 19, 14, '#9cbdb0');
+    [0, 1, 2].forEach(i => rect(context, x + 14, y + 28 + i * 4, 15, 1, '#c8dcc2'));
+    rect(context, x + 16, y + 27, 1, 11, '#c8dcc2'); rect(context, x + 26, y + 27, 1, 11, '#c8dcc2');
+    rect(context, x + 19, y + 30, 7, 6, '#5d897f'); rect(context, x + 21, y + 32, 3, 2, '#c4d8ba');
+    pixelOval(context, x + 31, y + 21, 6, 5, '#f3e2b8'); rect(context, x + 32, y + 23, 5, 16, '#e3c997');
+    pixelOval(context, x + 31, y + 37, 6, 4, '#b99e70');
+  } else if (role === 'pixel') {
+    softBox(context, x + 9, y + 25, 28, 18, 3, '#785945');
+    softBox(context, x + 11, y + 27, 24, 14, 2, '#a1805a');
+    rect(context, x + 14, y + 27, 3, 8, '#536759');
+    rect(context, x + 14, y + 34, 3, 5, '#c47b5e'); rect(context, x + 15, y + 27, 1, 8, '#c8cfb0');
+    rect(context, x + 23, y + 31, 2, 9, '#b8c7b2');
+    pixelOval(context, x + 20, y + 27, 7, 6, '#d9d9b4'); rect(context, x + 22, y + 27, 3, 2, '#a1805a');
+    pixelOval(context, x + 29, y + 30, 5, 5, '#4c6256'); rect(context, x + 31, y + 31, 1, 2, '#d0ca9b');
+  } else if (role === 'prisma') {
+    softBox(context, x + 8, y + 19, 24, 17, 2, '#78583b');
+    rect(context, x + 9, y + 20, 22, 14, '#f1dfb1');
+    rect(context, x + 13, y + 23, 14, 7, '#adc28b'); rect(context, x + 17, y + 25, 6, 5, '#d59d7a');
+    pixelOval(context, x + 10, y + 32, 25, 12, '#815836');
+    pixelOval(context, x + 11, y + 32, 23, 10, '#dfb47a');
+    pixelOval(context, x + 27, y + 35, 4, 4, '#8c6241');
+    [[14, 35, '#c76754'], [19, 33, '#7f9e59'], [24, 33, '#7a9cb5'], [19, 38, '#a087b2']].forEach(([dx, dy, tone]) => pixelOval(context, x + dx, y + dy, 3, 3, tone));
+    rect(context, x + 34, y + 19, 1, 16, '#785239'); rect(context, x + 33, y + 17, 3, 5, '#ae7350');
+    rect(context, x + 37, y + 24, 1, 13, '#b58a51'); rect(context, x + 36, y + 22, 3, 4, '#748f65');
+  } else if (role === 'ux') {
+    softBox(context, x + 10, y + 22, 26, 22, 3, '#5a5948');
+    softBox(context, x + 12, y + 24, 22, 17, 2, '#e2d6ac');
+    rect(context, x + 14, y + 26, 7, 12, '#8fae9d'); rect(context, x + 23, y + 26, 8, 2, '#688c7b');
+    rect(context, x + 23, y + 31, 7, 1, '#b2b58f'); rect(context, x + 25, y + 35, 6, 3, '#d38e70');
+    rect(context, x + 22, y + 42, 3, 1, '#b8b292');
+    for (let i = 0; i < 11; i++) rect(context, x + 37 + Math.floor(i / 4), y + 25 + i, 1, 1, '#e4d9ae');
+  } else if (role === 'nodo') {
+    softBox(context, x + 9, y + 23, 28, 21, 2, '#725f3d');
+    rect(context, x + 10, y + 24, 12, 17, '#eee0b5'); rect(context, x + 23, y + 24, 12, 17, '#dfcea1');
+    rect(context, x + 22, y + 24, 1, 18, '#a9946a');
+    [0, 1, 2].forEach(i => {
+      rect(context, x + 12, y + 27 + i * 4, 8, 1, '#a9ae87');
+      rect(context, x + 26, y + 28 + i * 4, 7, 1, '#a9ae87');
+    });
+    rect(context, x + 26, y + 23, 2, 5, '#c77e61');
+    rect(context, x + 34, y + 28, 3, 3, '#9fb375'); rect(context, x + 34, y + 33, 3, 3, '#d4b46b');
+  } else {
+    book(context, x + 9, y + 27, '#bfa167');
+    pixelOval(context, x + 22, y + 21, 12, 11, '#6c5137');
+    pixelOval(context, x + 23, y + 22, 10, 9, '#c4b274');
+    pixelOval(context, x + 24, y + 23, 8, 7, '#91b3a3');
+    rect(context, x + 25, y + 24, 3, 1, '#e5e7bd'); rect(context, x + 25, y + 25, 1, 2, '#e5e7bd');
+    for (let i = 0; i < 6; i++) {
+      rect(context, x + 31 + Math.floor(i / 2), y + 30 + i, 3, 1, '#74513a');
+      rect(context, x + 32 + Math.floor(i / 2), y + 30 + i, 1, 1, '#ba8a53');
+    }
   }
 }
 
@@ -248,7 +370,8 @@ function desk(context, item) {
     rect(context, x + offset + 2, y + 47, 3, 18, '#d49656');
     rect(context, x + offset + 6, y + 48, 2, 17, '#8d5636');
   });
-  frame(context, x, y, 134, 56, wood.shade);
+  softBox(context, x, y, 134, 56, 3, ink);
+  softBox(context, x + 1, y + 1, 132, 53, 2, wood.shade);
   rect(context, x + 2, y + 2, 130, 43, '#dba567');
   rect(context, x + 2, y + 2, 130, 2, '#f4d18e');
   rect(context, x + 2, y + 44, 130, 3, '#b97741');
@@ -263,35 +386,19 @@ function desk(context, item) {
   [8, 99].forEach(offset => {
     frame(context, x + offset, y + 48, 28, 7, '#b87a43', '#80502f', 1);
     rect(context, x + offset + 2, y + 49, 24, 1, '#e0a360');
-    rect(context, x + offset + 11, y + 51, 7, 2, '#65452d');
-    rect(context, x + offset + 12, y + 51, 5, 1, '#ddbc6a');
+    pixelOval(context, x + offset + 10, y + 50, 9, 4, '#65452d');
+    pixelOval(context, x + offset + 11, y + 50, 7, 2, '#ddbc6a');
   });
   monitor(context, x + 43, y + 6, id);
   // Teclado, mouse y taza de cerámica.
   frame(context, x + 43, y + 44, 49, 6, '#a5a58a', '#6a654a', 1);
   for (let key = 0; key < 13; key++) rect(context, x + 46 + key * 3, y + 46, 2, 1, '#ded7b1');
   rect(context, x + 53, y + 48, 22, 1, '#d9d0aa');
-  frame(context, x + 98, y + 42, 7, 8, '#a5ac8c', '#6a654a', 1);
-  rect(context, x + 101, y + 43, 1, 2, '#d9d6ae');
-  rect(context, x + 111, y + 39, 14, 4, '#75493240');
-  frame(context, x + 110, y + 27, 11, 13, '#d99358', ink, 1);
-  frame(context, x + 120, y + 30, 5, 7, '#e0a769', ink, 1);
-  rect(context, x + 121, y + 32, 2, 3, '#c58a51');
-  rect(context, x + 111, y + 27, 9, 3, '#f2d49c'); rect(context, x + 113, y + 28, 5, 1, '#6c422b');
-  rect(context, x + 112, y + 31, 2, 6, '#ecc086');
-  if (id === 'prisma') {
-    frame(context, x + 10, y + 21, 24, 23, '#f2dfae', '#906039', 1);
-    rect(context, x + 13, y + 24, 18, 12, '#a4b57a'); rect(context, x + 16, y + 27, 8, 6, '#d69474');
-    ['#d88568', '#7f9d65', '#8da5b3', '#b49ab7'].forEach((tone, i) => rect(context, x + 13 + i * 5, y + 39, 3, 3, tone));
-    rect(context, x + 28, y + 15, 1, 13, '#755237'); rect(context, x + 27, y + 14, 3, 4, '#bd7762');
-  } else if (id === 'ux') {
-    frame(context, x + 11, y + 23, 24, 20, '#e9d6a9', '#8d6542', 1);
-    rect(context, x + 14, y + 26, 8, 12, '#8daca0'); rect(context, x + 25, y + 26, 6, 3, '#c98b6a');
-    rect(context, x + 25, y + 32, 6, 1, '#a4916c'); rect(context, x + 25, y + 35, 6, 1, '#a4916c');
-  } else {
-    book(context, x + 11, y + 27, { atlas: '#9a7ba0', pixel: '#6b92a1', nodo: '#8b9e63', lupa: '#c09652' }[id]);
-    rect(context, x + 20, y + 21, 16, 2, '#7a5736'); rect(context, x + 33, y + 20, 4, 2, '#d0a45e');
-  }
+  pixelOval(context, x + 97, y + 42, 9, 9, '#6a654a');
+  pixelOval(context, x + 98, y + 42, 7, 7, '#b3b795');
+  rect(context, x + 101, y + 43, 1, 2, '#e1dcb6');
+  ceramicMug(context, x + 110, y + 27, { atlas: '#ac8fb4', pixel: '#80a7a2', prisma: '#ce8468', nodo: '#9cad6d', ux: '#d6c18c', lupa: '#d6a160' }[id]);
+  roleTools(context, x, y, id);
   // Cartel de especialidad separado de la placa de nombre.
   frame(context, x + 5, y - 22, 124, 14, '#edcf94', '#855734', 1);
   rect(context, x + 7, y - 21, 120, 1, '#f7dfac');
@@ -299,18 +406,30 @@ function desk(context, item) {
 }
 
 function chair(context, x, y, upholstery) {
-  rect(context, x - 15, y + 7, 32, 8, '#5b3c2b30');
-  frame(context, x - 14, y - 24, 29, 23, wood.shade);
-  frame(context, x - 11, y - 21, 23, 16, upholstery, '#6a4c36', 1);
-  rect(context, x - 9, y - 19, 19, 1, '#e4d7aa60');
-  rect(context, x - 9, y - 7, 19, 1, '#4a4a3530');
+  pixelOval(context, x - 16, y + 7, 34, 10, '#5b3c2b30');
+  softBox(context, x - 14, y - 24, 29, 23, 4, ink);
+  softBox(context, x - 13, y - 23, 27, 21, 4, wood.shade);
+  softBox(context, x - 12, y - 22, 25, 19, 4, '#6a4c36');
+  softBox(context, x - 11, y - 21, 23, 17, 4, upholstery);
+  rect(context, x - 8, y - 20, 17, 2, '#f0dfb448');
+  rect(context, x - 10, y - 17, 1, 10, '#eddfb550');
+  rect(context, x - 8, y - 6, 17, 1, '#4a4a3540');
+  [-4, 4].forEach(offset => {
+    rect(context, x + offset, y - 13, 2, 2, '#60493150');
+    rect(context, x + offset, y - 13, 1, 1, '#f0dfb480');
+  });
   for (let i = 0; i < 5; i++) {
     rect(context, x - 9 + i * 4, y - 17, 1, 1, '#e0dab482');
     rect(context, x - 9 + i * 4, y - 8, 1, 1, '#e0dab482');
   }
-  frame(context, x - 14, y - 2, 29, 11, wood.shade);
-  rect(context, x - 11, y - 1, 23, 6, upholstery); rect(context, x - 10, y, 20, 1, '#e4d7aa50');
-  rect(context, x - 11, y + 6, 23, 1, '#594b353b');
+  softBox(context, x - 14, y - 2, 29, 11, 4, ink);
+  softBox(context, x - 13, y - 2, 27, 9, 4, wood.shade);
+  softBox(context, x - 11, y - 2, 23, 9, 3, upholstery);
+  rect(context, x - 8, y - 1, 17, 1, '#e4d7aa50');
+  rect(context, x - 9, y + 5, 19, 1, '#594b3540');
+  softBox(context, x - 15, y - 6, 5, 10, 2, ink);
+  softBox(context, x + 11, y - 6, 5, 10, 2, ink);
+  rect(context, x - 14, y - 6, 3, 2, '#c29155'); rect(context, x + 12, y - 6, 3, 2, '#c29155');
   rect(context, x - 2, y + 9, 5, 9, ink); rect(context, x - 1, y + 10, 2, 7, '#9b7949');
   rect(context, x - 10, y + 17, 21, 3, ink); rect(context, x - 10, y + 17, 21, 1, '#ae8650');
   rect(context, x - 12, y + 19, 4, 3, '#47392b'); rect(context, x + 9, y + 19, 4, 3, '#47392b');

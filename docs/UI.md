@@ -33,7 +33,7 @@ En pantallas de menos de 820 px se muestran controles táctiles. Los tabs admite
 | Lupa | Abrigo amarillo y lupa | Verificación independiente |
 | Tú | Avatar pixel personalizado | Cuatro orientaciones y animación de pasos, derivado de una referencia autorizada |
 
-El jugador se dibuja con un módulo Canvas independiente de los seis agentes. La referencia original no se distribuye ni se versiona. Las partes no visibles en la referencia son decisiones de diseño para completar el personaje; no se presentan como datos observados.
+El avatar personal y los seis agentes usan un motor de sprites compartido; cada identidad conserva su propia paleta, atuendo y accesorios. La referencia original no se distribuye ni se versiona. Las partes no visibles en la referencia son decisiones de diseño para completar el personaje; no se presentan como datos observados.
 
 ## Estado real
 

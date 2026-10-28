@@ -1,3 +1,4 @@
+import { drawAgentCharacter } from './characters.js';
 import { drawStudioRoom } from './room.js';
 import { drawPlayerAvatar } from './avatar.js';
 
@@ -5,8 +6,14 @@ const $ = (selector) => document.querySelector(selector);
 const canvas = $('#office');
 const ctx = canvas.getContext('2d');
 ctx.imageSmoothingEnabled = false;
-const avatarPortrait = $('#player-portrait');
-drawPlayerAvatar(avatarPortrait.getContext('2d'), 16, 41, { scale: 1.6 });
+function renderPlayerPortrait() {
+  const portraitCanvas = document.querySelector('#player-portrait');
+  const portraitContext = portraitCanvas.getContext('2d');
+  portraitContext.clearRect(0, 0, portraitCanvas.width, portraitCanvas.height);
+  portraitContext.imageSmoothingEnabled = false;
+  drawPlayerAvatar(portraitContext, 20, 60, { scale: 2 });
+}
+renderPlayerPortrait();
 const state = { agents: [], tasks: [], projects: [], requests: [], selected: null, project: 'studio', chats: new Map(), events: [], connected: false, tab: 'chat' };
 const spots = { atlas: { x: 170, y: 223 }, pixel: { x: 355, y: 223 }, prisma: { x: 655, y: 223 }, nodo: { x: 170, y: 392 }, ux: { x: 416, y: 392 }, lupa: { x: 655, y: 392 } };
 const desks = { atlas: { x: 102, y: 133, w: 134, h: 62 }, pixel: { x: 286, y: 133, w: 134, h: 62 }, prisma: { x: 588, y: 133, w: 134, h: 62 }, nodo: { x: 102, y: 304, w: 134, h: 62 }, ux: { x: 349, y: 304, w: 134, h: 62 }, lupa: { x: 588, y: 304, w: 134, h: 62 } };
@@ -14,7 +21,7 @@ const archetypes = { atlas: 'El cartógrafo · capa violeta', pixel: 'El constru
 const colors = { atlas: '#a99ad6', pixel: '#7dbccf', prisma: '#e69e91', nodo: '#a0c782', ux: '#6ed9d1', lupa: '#dfc47f' };
 const labels = { proposed: 'En espera', assigned: 'Asignada', todo: 'Pendiente', pending: 'Pendiente', queued: 'En cola', running: 'En curso', in_progress: 'En curso', review: 'En revisión', awaiting_review: 'En revisión', blocked: 'Bloqueada', done: 'Completada', completed: 'Completada', idle: 'Disponible', ready: 'Disponible' };
 const requestSteps = [{ name: 'UX', detail: 'Brief · Vera' }, { name: 'Atlas', detail: 'Plan' }, { name: 'Pixel', detail: 'Implementación' }, { name: 'Lupa', detail: 'QA' }, { name: 'UX', detail: 'Validación · Vera' }];
-const player = { x: 416, y: 423, facing: 'down', walking: false };
+const player = { x: 460, y: 439, facing: 'down', walking: false };
 const keys = new Set();
 let nearest = null;
 let lastFrame = 0;
@@ -62,6 +69,7 @@ async function refresh() {
     state.projects = data.projects;
     state.requests = data.requests || [];
     if (!state.selected || !state.agents.some(agent => agent.id === state.selected)) state.selected = data.agents[0]?.id;
+    renderPlayerPortrait();
     renderAgents();
     renderProjects();
     renderSelected();
@@ -80,12 +88,12 @@ function renderProjects() {
 }
 function portrait(agent, large = false) {
   const sprite = document.createElement('canvas');
-  sprite.width = 32;
-  sprite.height = 38;
+  sprite.width = 40;
+  sprite.height = 64;
   sprite.setAttribute('aria-hidden', 'true');
   const context = sprite.getContext('2d');
   context.imageSmoothingEnabled = false;
-  drawCharacter(context, 16, 35, agentColor(agent), agent.id, 'down', 0, 1.8);
+  drawCharacter(context, 20, 60, agentColor(agent), agent.id, 'down', 0, 2);
   return sprite;
 }
 function renderAgents() {
@@ -417,27 +425,7 @@ function drawRoom() {
   drawStudioRoom(ctx, { agents: state.agents, selected: state.selected, colors });
 }
 function drawCharacter(context, x, y, color, kind, facing = 'down', step = 0, scale = 2) {
-  context.save(); context.translate(Math.round(x), Math.round(y)); context.scale(scale, scale);
-  rect(context, -6, -1, 13, 3, '#31483655');
-  const sway = step ? Math.round(Math.sin(step) * 1.3) : 0;
-  rect(context, -4, -5, 3, 5 + (sway > 0 ? 1 : 0), '#354e4a'); rect(context, 2, -5, 3, 5 + (sway < 0 ? 1 : 0), '#354e4a');
-  rect(context, -5, -2 + (sway > 0 ? 1 : 0), 4, 2, '#253b35'); rect(context, 2, -2 + (sway < 0 ? 1 : 0), 4, 2, '#253b35');
-  rect(context, -5, -12, 11, 9, color); rect(context, -7, -11, 2, 7, color); rect(context, 6, -11, 2, 7, color);
-  rect(context, -7, -5, 2, 2, '#dcb78a'); rect(context, 6, -5, 2, 2, '#dcb78a');
-  rect(context, -4, -19, 9, 8, '#dfba8c'); rect(context, -5, -18, 1, 5, '#bd946e');
-  const hair = kind === 'prisma' ? '#8b5844' : kind === 'lupa' ? '#6c5943' : kind === 'pixel' ? '#4a5953' : kind === 'nodo' ? '#735d43' : '#5b504b';
-  rect(context, -5, -20, 10, 4, hair); rect(context, -5, -18, 2, 5, hair);
-  if (facing !== 'up') {
-    rect(context, -2, -15, 1, 2, '#35433a'); rect(context, 3, -15, 1, 2, '#35433a'); rect(context, 0, -12, 2, 1, '#b17c62');
-  } else { rect(context, -4, -18, 8, 6, hair); }
-  if (kind === 'atlas') { rect(context, -6, -11, 3, 9, '#7866a7'); rect(context, -2, -15, 3, 2, '#b8ccd4'); rect(context, 2, -15, 3, 2, '#b8ccd4'); }
-  if (kind === 'prisma') { rect(context, -6, -22, 12, 4, '#d98a7a'); rect(context, -4, -23, 8, 2, '#e4a28d'); rect(context, 2, -24, 1, 2, '#6c7855'); rect(context, -5, -18, 2, 9, hair); }
-  if (kind === 'pixel') { rect(context, -6, -17, 2, 5, '#789a99'); rect(context, 5, -17, 2, 5, '#789a99'); rect(context, -4, -12, 2, 7, '#528fa4'); }
-  if (kind === 'nodo') { rect(context, -2, -11, 4, 7, '#d1d0a0'); rect(context, -1, -11, 2, 4, '#657b52'); }
-  if (kind === 'lupa') { rect(context, 3, -15, 4, 4, '#5d7059'); rect(context, 4, -14, 2, 2, '#b2d5c5'); rect(context, 6, -11, 2, 3, '#5d7059'); }
-  if (kind === 'ux') { rect(context, -5, -19, 2, 10, '#70504d'); rect(context, 4, -19, 2, 10, '#70504d'); rect(context, -4, -19, 9, 1, '#6ed9d1'); rect(context, 3, -8, 5, 6, '#344f4d'); rect(context, 4, -7, 3, 3, '#c6dfc0'); }
-  if (kind === 'player') { rect(context, -2, -11, 4, 2, '#e0e4b4'); rect(context, 3, -8, 2, 2, '#648c60'); }
-  context.restore();
+  drawAgentCharacter(context, x, y, { id: kind, tint: color, facing, step, scale });
 }
 function canMove(x, y) {
   if (x < 57 || x > 775 || y < 118 || y > 450) return false;
@@ -479,7 +467,7 @@ function draw(now) {
   characters.sort((a, b) => a.y - b.y).forEach(character => {
     if (character.isPlayer) {
       drawPlayerAvatar(ctx, player.x, player.y, { facing: player.facing, step: player.walking ? now / 95 : 0, scale: 2 });
-      pixelText('TÚ', player.x, player.y - 55, '#eef3d5', 8);
+      pixelText('TÚ', player.x, player.y - 67, '#eef3d5', 8);
     } else {
       const { agent, x, y } = character;
       if (agent.id === state.selected) {
@@ -490,7 +478,7 @@ function draw(now) {
       const close = nearest?.id === agent.id;
       rect(ctx, x - 29, y + 9, 58, 14, '#314b3ee6');
       pixelText(agent.name.toUpperCase(), x, y + 19, close ? '#f1f3d7' : '#d5dfbb', 8);
-      if (close) { rect(ctx, x - 7, y - 62, 15, 14, '#e0e9b8'); pixelText('E', x + .5, y - 52, '#35573d', 9); }
+      if (close) { rect(ctx, x - 7, y - 76, 15, 14, '#e0e9b8'); pixelText('E', x + .5, y - 66, '#35573d', 9); }
     }
   });
   animationFrame = requestAnimationFrame(draw);
@@ -511,7 +499,7 @@ window.addEventListener('keydown', event => {
 window.addEventListener('keyup', event => keys.delete(event.key.toLowerCase()));
 window.addEventListener('blur', () => keys.clear());
 document.addEventListener('visibilitychange', () => { if (document.hidden) keys.clear(); });
-$('#reset-position').addEventListener('click', () => { player.x = 416; player.y = 423; keys.clear(); canvas.focus(); });
+$('#reset-position').addEventListener('click', () => { player.x = 460; player.y = 439; keys.clear(); canvas.focus(); });
 $('#touch-interact').addEventListener('click', interact);
 document.querySelectorAll('[data-direction]').forEach(button => {
   const key = `arrow${button.dataset.direction}`;
