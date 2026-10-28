@@ -20,7 +20,27 @@ El historial se persiste, pero los IDs SSE y la deduplicación son del proceso.
 Una desconexión requiere refrescar el snapshot; no volver a enviar el mensaje
 automáticamente. Los endpoints de tareas y solicitudes devuelven 409.
 
-## Modo de regresión explícito
+## Medios privados en v0.3
+
+- `GET /api/media`: `{items}` con ID, título, agente, tipo, procedencia y URL local.
+- `POST /api/media?agentId=prisma&title=...`: cuerpo binario, hasta 25 MB;
+  PNG/JPEG/WebP/GIF/MP4/WebM identificados por firma. Devuelve `{asset}`, HTTP 201.
+  El modo real es obligatorio. Host y Origin se validan igual que en el chat.
+- `GET|HEAD /api/media/:id/content`: contenido con tipo explícito, CSP aislada y
+  `Accept-Ranges: bytes`. Un rango válido devuelve 206; inválido, 416.
+- `source: hermes`: imagen creada a partir de primitivas validadas de un bloque
+  `studio-media` del resultado del modelo. `source: upload`: adjunto del usuario.
+- `artifact.created`: `data.asset`, agente y proyecto `studio`; la UI selecciona
+  ese resultado en la TV. La conversación incluye los assets aceptados.
+
+El bloque declara `title`, `width`, `height`, `background`, `elements`. Se admiten
+rect, circle, ellipse, line, path y text; no HTML/SVG libre, scripts ni URLs.
+Máximo 120 elementos, dimensiones 128–1920, título 140 caracteres. La galería
+conserva hasta 200 entradas en `.runtime/hermes-office/media/`, sin rutas privadas
+en la respuesta HTTP. Los vídeos requieren un códec que reproduzca el navegador;
+el servidor no convierte ni sintetiza vídeo.
+
+## Modo de regresión explícito (contrato histórico)
 
 La tabla y las simulaciones siguientes documentan únicamente `STUDIO_MODE=demo`.
 

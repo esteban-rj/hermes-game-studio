@@ -1,579 +1,277 @@
-import { drawAgentCharacter } from './characters.js';
-import { drawStudioRoom } from './room.js';
-import { drawPlayerAvatar } from './avatar.js';
+import { characterMarkup, characterStyles } from './vector-characters.js';
+import { WORLD, AGENT_SPOTS, roomMarkup, roomStyles } from './vector-room.js';
+import { walkable, findPath, cameraTransform } from './navigation.js';
 
-const $ = (selector) => document.querySelector(selector);
-const canvas = $('#office');
-const ctx = canvas.getContext('2d');
-ctx.imageSmoothingEnabled = false;
-function renderPlayerPortrait() {
-  const portraitCanvas = document.querySelector('#player-portrait');
-  const portraitContext = portraitCanvas.getContext('2d');
-  portraitContext.clearRect(0, 0, portraitCanvas.width, portraitCanvas.height);
-  portraitContext.imageSmoothingEnabled = false;
-  drawPlayerAvatar(portraitContext, 20, 60, { scale: 2 });
-}
-renderPlayerPortrait();
-const state = { agents: [], tasks: [], projects: [], requests: [], selected: null, project: 'studio', chats: new Map(), events: [], connected: false, tab: 'chat', mode: null, sending: false, busy: null, live: null };
-const spots = { atlas: { x: 170, y: 223 }, pixel: { x: 355, y: 223 }, prisma: { x: 655, y: 223 }, nodo: { x: 170, y: 392 }, ux: { x: 416, y: 392 }, lupa: { x: 655, y: 392 } };
-const desks = { atlas: { x: 102, y: 133, w: 134, h: 62 }, pixel: { x: 286, y: 133, w: 134, h: 62 }, prisma: { x: 588, y: 133, w: 134, h: 62 }, nodo: { x: 102, y: 304, w: 134, h: 62 }, ux: { x: 349, y: 304, w: 134, h: 62 }, lupa: { x: 588, y: 304, w: 134, h: 62 } };
-const archetypes = { atlas: 'El cartógrafo · capa violeta', pixel: 'El constructor · chaqueta azul', prisma: 'La artista · boina coral', nodo: 'El anfitrión · chaleco verde', ux: 'La diseñadora · chaqueta turquesa', lupa: 'La exploradora · abrigo amarillo' };
-const colors = { atlas: '#a99ad6', pixel: '#7dbccf', prisma: '#e69e91', nodo: '#a0c782', ux: '#6ed9d1', lupa: '#dfc47f' };
-const labels = { proposed: 'En espera', assigned: 'Asignada', todo: 'Pendiente', pending: 'Pendiente', queued: 'En cola', running: 'En curso', in_progress: 'En curso', review: 'En revisión', awaiting_review: 'En revisión', blocked: 'Bloqueada', done: 'Completada', completed: 'Completada', idle: 'Disponible', ready: 'Disponible' };
-const requestSteps = [{ name: 'UX', detail: 'Brief · Vera' }, { name: 'Atlas', detail: 'Plan' }, { name: 'Pixel', detail: 'Implementación' }, { name: 'Lupa', detail: 'QA' }, { name: 'UX', detail: 'Validación · Vera' }];
-const player = { x: 460, y: 439, facing: 'down', walking: false };
+const $ = selector => document.querySelector(selector);
+const ns = 'http://www.w3.org/2000/svg';
+const state = { agents:[], conversations:{}, media:[], selected:null, busy:null, mode:null, connected:false, sending:false, live:null, tab:'chat', events:[], open:false, tvId:null };
+const desktop = matchMedia('(min-width:1100px)');
+const reduced = matchMedia('(prefers-reduced-motion:reduce)');
+const player = { x:500,y:900,facing:1,path:[] };
+const camera = { x:500,y:740,zoom:desktop.matches ? .62 : .78,follow:true,width:0,height:0,tx:0,ty:0 };
 const keys = new Set();
-let nearest = null;
-let lastFrame = 0;
-let eventStream;
-let refreshing = null;
-let animationFrame = 0;
-let voiceRun = null;
-let voiceStage = 'disconnected';
-let voiceDetail = 'Voz real desconectada. La prueba sólo muestra texto; no escucha ni reproduce audio.';
-const obstacles = [
-  { x: 102, y: 133, w: 134, h: 62 }, { x: 286, y: 133, w: 134, h: 62 }, { x: 588, y: 133, w: 134, h: 62 },
-  { x: 102, y: 304, w: 134, h: 62 }, { x: 588, y: 304, w: 134, h: 62 },
-  { x: 454, y: 94, w: 89, h: 35 }, { x: 52, y: 401, w: 40, h: 41 }, { x: 746, y: 401, w: 35, h: 41 },
-  { x: 349, y: 304, w: 134, h: 62 },
-];
-
-function element(tag, className, text) {
-  const node = document.createElement(tag);
-  if (className) node.className = className;
-  if (text !== undefined) node.textContent = text;
-  return node;
+const icons = {
+ office:'<rect x="4" y="4" width="16" height="17" rx="2"/><path d="M9 21v-5h6v5M8 8h1m6 0h1M8 12h1m6 0h1"/>',
+ tv:'<rect x="2" y="4" width="20" height="14" rx="3"/><path d="M8 22h8m-4-4v4"/>',
+ plus:'<path d="M12 5v14M5 12h14"/>',minus:'<path d="M5 12h14"/>',
+ expand:'<path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/>',
+ locate:'<circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="1"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3"/>',
+ chat:'<path d="M21 11a8 8 0 0 1-8 8H5l-3 3v-11a8 8 0 0 1 8-8h3a8 8 0 0 1 8 8Z"/><path d="M7 10h9M7 14h6"/>',
+ send:'<path d="m5 19 14-14M5 5h14v14"/>',close:'<path d="m6 6 12 12M18 6 6 18"/>',
+ door:'<path d="M4 21h16M7 21V4l10-2v19M13 12h1"/>',
+ lock:'<rect x="5" y="10" width="14" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3m-4 5v2"/>',
+ play:'<path d="m8 4 13 8-13 8Z"/>'
+};
+function icon(name) { return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (icons[name] || icons.tv) + '</svg>'; }
+function fillIcons(root=document) { root.querySelectorAll('[data-icon]').forEach(node => { node.innerHTML = icon(node.dataset.icon); }); }
+function node(tag,className,text) { const el=document.createElement(tag); if(className)el.className=className; if(text!==undefined)el.textContent=text; return el; }
+function portrait(id) { const svg=document.createElementNS(ns,'svg');svg.setAttribute('viewBox','-36 -114 72 120');svg.setAttribute('aria-hidden','true');svg.innerHTML=characterMarkup(id,{portrait:true});return svg; }
+function selected() { return state.agents.find(agent=>agent.id===state.selected); }
+function owner(asset) { return state.agents.find(agent=>agent.id===asset.agentId)?.name || 'Equipo'; }
+function origin(asset) { return owner(asset)+(asset.source==='hermes'?' · Hermes':' · Adjunto'); }
+function status(text) { $('#form-status').textContent=text; }
+async function api(url,body) {
+ const response=await fetch(url,body===undefined?{cache:'no-store'}:{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+ const data=await response.json();if(!response.ok)throw new Error(data.error || 'No se pudo completar la acción.');return data;
 }
-function agentColor(agent) { return colors[agent.id] || agent.color || '#b5d68a'; }
-function agentSpot(agent, index = 0) { return spots[agent.id] || Object.values(spots)[index % 6]; }
-function label(status) { return labels[status] || status || 'Disponible'; }
-function setStatus(message) { $('#form-status').textContent = message; }
-function setConnection(connected, message) {
-  state.connected = connected;
-  $('#connection-label').textContent = message;
-  $('#connection-light').style.background = connected ? '#b5d68a' : '#dfb27f';
-  $('#send-message').disabled = !connected || state.sending || Boolean(state.busy);
-}
-function configureRuntime() {
-  const real = state.mode === 'real';
-  $('#runtime-badge').textContent = real ? '● HERMES CONECTADO' : 'DEMO LOCAL';
-  const responding = state.agents.find(agent => agent.id === state.busy?.agentId);
-  $('#chat-mode-note').textContent = real ? responding ? `${responding.name} está respondiendo · espera para enviar otro mensaje` : '◇ Tu suscripción · conversación real' : '◇ Respuesta simulada';
-  $('.ux-card').hidden = real;
-  $('.voice-demo-card').hidden = real;
-  $('#tab-tasks').hidden = real;
-  $('.project-picker > p').textContent = real ? 'Una sesión propia para cada agente' : 'Ejemplos ficticios · contextos separados';
-  $('.intro').textContent = real ? 'Cada agente tiene su mesa. Acércate para conversar, compartir ideas y planificar con tu equipo.' : 'Cada agente tiene su mesa. Acércate para conversar y probar el flujo de voz demo.';
-  $('.version').innerHTML = real ? 'HERMES<br><b>0.2</b>' : 'PROTOTIPO<br><b>0.1</b>';
-  $('.activity-card .section-title > span').textContent = real ? 'ACTIVIDAD REAL' : 'EVENTOS DEMO';
-  $('.simulation-note').textContent = real ? 'Hermes responde con tu suscripción. Cada agente conserva su conversación local. Las herramientas de código y la voz todavía no están conectadas a esta oficina.' : 'Las conversaciones y tareas son simuladas.';
-  canvas.setAttribute('aria-label', 'Oficina pixel art con seis mesas. Muévete con WASD o flechas y pulsa E para conversar con el agente. También puedes seleccionarlo en la lista del equipo.');
-  if (real && state.tab === 'tasks') switchTab('chat');
-}
-async function api(path, body) {
-  const response = await fetch(path, body === undefined ? { cache: 'no-store' } : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-  const data = await response.json();
-  if (!response.ok) throw new Error(typeof data.error === 'string' ? data.error : data.error?.message || 'No se pudo completar la acción.');
-  return data;
-}
-async function refresh() {
-  if (refreshing) return refreshing;
-  refreshing = (async () => {
-    const data = await api('/api/studio');
-    state.mode = data.mode;
-    state.busy = data.busy || null;
-    if (data.conversations) {
-      for (const [agentId, chat] of Object.entries(data.conversations)) state.chats.set(`studio:${agentId}`, chat.messages || []);
-    }
-    state.agents = data.agents;
-    state.tasks = data.tasks;
-    state.projects = data.projects;
-    state.requests = data.requests || [];
-    if (!data.projects.some(project => project.id === state.project)) state.project = data.projects[0]?.id;
-    if (!state.selected || !state.agents.some(agent => agent.id === state.selected)) state.selected = data.agents[0]?.id;
-    renderPlayerPortrait();
-    renderAgents();
-    renderProjects();
-    renderSelected();
-    renderRequests();
-    configureRuntime();
-    $('#send-message').disabled = !state.connected || state.sending || Boolean(state.busy);
-  })();
-  try { await refreshing; } finally { refreshing = null; }
-}
-function renderProjects() {
-  const picker = $('#project');
-  picker.replaceChildren(...state.projects.map(project => {
-    const option = element('option', null, project.name);
-    option.value = project.id;
-    return option;
-  }));
-  picker.value = state.project;
-}
-function portrait(agent, large = false) {
-  const sprite = document.createElement('canvas');
-  sprite.width = 40;
-  sprite.height = 64;
-  sprite.setAttribute('aria-hidden', 'true');
-  const context = sprite.getContext('2d');
-  context.imageSmoothingEnabled = false;
-  drawCharacter(context, 20, 60, agentColor(agent), agent.id, 'down', 0, 2);
-  return sprite;
-}
-function renderAgents() {
-  $('#agent-list').replaceChildren(...state.agents.map(agent => {
-    const button = element('button', 'agent-button');
-    button.type = 'button';
-    button.dataset.agent = agent.id;
-    button.style.setProperty('--agent-color', agentColor(agent));
-    button.setAttribute('aria-pressed', String(agent.id === state.selected));
-    const avatar = element('span', 'mini-portrait');
-    avatar.setAttribute('aria-hidden', 'true');
-    avatar.append(portrait(agent));
-    const info = element('span');
-    info.append(element('span', 'name', agent.name), element('span', 'role', agent.role));
-    const status = element('span', 'state');
-    status.append(element('b', null, state.mode === 'real' ? agent.status === 'running' ? 'Pensando' : 'Hermes' : 'Demo'));
-    button.append(avatar, info, status);
-    button.addEventListener('click', () => selectAgent(agent.id));
-    return button;
-  }));
-}
-function conversationKey() { return `${state.project}:${state.selected}`; }
-function conversation() {
-  const key = conversationKey();
-  if (!state.chats.has(key)) {
-    const agent = state.agents.find(a => a.id === state.selected);
-    state.chats.set(key, state.mode === 'real' ? [] : [{ who: 'agent', message: `Hola, soy ${agent?.name || 'parte del equipo'}. ${agent?.description || 'Te ayudo a explorar este rol.'}\n\nEsta es una conversación de demostración. Cuéntame qué misión tienes en mente.` }]);
+const style=document.createElement('style');style.textContent=characterStyles+'\n'+roomStyles;document.head.append(style);
+fillIcons();
+$('#room-layer').innerHTML=roomMarkup();
+$('#player-sprite').innerHTML='<ellipse class="player-marker" cy="7" rx="23" ry="9"/>'+characterMarkup('player')+'<text class="agent-name-tag" y="30">TÚ</text>';
+const figures=new Map();
+function renderTeam() {
+ $('#agent-list').replaceChildren(...state.agents.map(agent=>{
+  const button=node('button','agent-button');button.type='button';button.dataset.agent=agent.id;button.style.setProperty('--agent-color',agent.color);button.setAttribute('aria-pressed',String(agent.id===state.selected));
+  const p=node('span','mini-portrait');p.append(portrait(agent.id));const info=node('span');info.append(node('span','name',agent.name),node('span','role',agent.role));button.append(p,info,node('span','agent-presence'));button.addEventListener('click',()=>selectAgent(agent.id));return button;
+ }));
+ for(const agent of state.agents) {
+  let figure=figures.get(agent.id);
+  if(!figure) {
+   const point=AGENT_SPOTS[agent.id];if(!point)continue;
+   figure=document.createElementNS(ns,'g');figure.setAttribute('transform','translate('+point.x+' '+point.y+')');figure.setAttribute('tabindex','0');figure.setAttribute('role','button');figure.setAttribute('aria-label','Hablar con '+agent.name);figure.dataset.officeAgent=agent.id;
+   figure.innerHTML='<ellipse class="selection-ring" cy="3" rx="38" ry="15"/>'+characterMarkup(agent.id)+'<circle class="agent-status-dot" cx="27" cy="-105" r="4"/><text class="agent-name-tag" y="30"></text>';figure.querySelector('text.agent-name-tag').textContent=agent.name;
+   figure.addEventListener('click',event=>{event.stopPropagation();selectAgent(agent.id);});
+   figure.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();selectAgent(agent.id);}});
+   $('#actors-layer').append(figure);figures.set(agent.id,figure);
   }
-  return state.chats.get(key);
+  figure.setAttribute('class','agent-figure'+(agent.id===state.selected?' selected':'')+(agent.status==='running'?' working':''));
+ }
+ const select=$('#upload-agent');const previous=select.value;select.replaceChildren(...state.agents.map(agent=>{const option=node('option',null,agent.name+' · '+agent.role);option.value=agent.id;return option;}));select.value=previous||state.selected;
 }
 function renderChat() {
-  const thread = $('#chat-thread');
-  const entries = [...conversation()];
-  if (state.live?.agentId === state.selected && state.project === 'studio' && state.live.text) entries.push({ who: 'agent', message: state.live.text, streaming: true });
-  thread.replaceChildren(...entries.map(item => {
-    const message = element('div', `chat-message${item.who === 'user' ? ' user' : ''}`);
-    const name = state.agents.find(agent => agent.id === state.selected)?.name;
-    const caption = item.who === 'user' ? 'TÚ' : item.who === 'system' ? 'ESTUDIO' : `${name?.toUpperCase()} · ${state.mode === 'real' ? item.streaming ? 'RESPONDIENDO…' : 'HERMES' : 'DEMO'}`;
-    message.append(element('small', null, caption), document.createTextNode(item.message));
-    return message;
-  }));
-  if (!entries.length) thread.append(element('p', 'empty-state', 'Escríbele para iniciar una conversación real con su perfil de Hermes.'));
-  thread.scrollTop = thread.scrollHeight;
+ const chat=state.conversations[state.selected]?.messages || [];
+ const entries=[...chat];
+ if(state.live?.agentId===state.selected&&state.live.text) entries.push({who:'agent',message:state.live.text,streaming:true});
+ const thread=$('#chat-thread');thread.replaceChildren();
+ if(!entries.length) {
+  const empty=node('div','chat-empty');empty.append(node('span',null,'✦'),node('b',null,'Las buenas ideas empiezan hablando.'),document.createTextNode('Cuéntale a '+(selected()?.name||'tu equipo')+' lo que tienes en mente. También puedes pedirle un gráfico para la TV.'));thread.append(empty);
+ }
+ const fence=String.fromCharCode(96).repeat(3)+'studio-media';
+ for(const entry of entries) {
+  const message=node('div','chat-message '+(entry.who==='user'?'user':entry.who==='system'?'system':''));
+  const caption=entry.who==='user'?'TÚ':entry.who==='system'?'ESTUDIO':(selected()?.name.toUpperCase()||'HERMES')+(entry.streaming?' · RESPONDIENDO':' · HERMES');
+  let text=entry.message||'';if(entry.streaming&&text.includes(fence))text=text.split(fence)[0]+'\nPreparando el gráfico para la TV…';
+  message.append(node('small',null,caption),document.createTextNode(text));
+  for(const asset of entry.media||[]) { const button=node('button','chat-asset','Ver en la TV · '+asset.title+' ↗');button.type='button';button.addEventListener('click',()=>showMedia(asset.id));message.append(button); }
+  thread.append(message);
+ }
+ thread.scrollTop=thread.scrollHeight;
 }
 function renderSelected() {
-  const agent = state.agents.find(a => a.id === state.selected);
-  if (!agent) return;
-  $('#selected-name').textContent = agent.name;
-  $('#selected-role').textContent = agent.role.toUpperCase();
-  $('#selected-status').textContent = `${label(agent.status)} · ${state.mode === 'real' ? 'Hermes' : 'personaje demo'}`;
-  $('#selected-portrait').replaceChildren(portrait(agent, true));
-  $('#selected-portrait').style.borderColor = agentColor(agent) + '77';
-  $('#selected-portrait').style.background = agentColor(agent) + '18';
-  $('#profile-description').textContent = agent.description;
-  $('#profile-archetype').textContent = archetypes[agent.id] || agent.role;
-  $('#profile-runtime').textContent = state.mode === 'real' ? 'Autenticado · perfil propio' : 'Desconectado';
-  $('#profile-model').textContent = agent.model || 'Sin configurar';
-  $('#profile-tools').textContent = state.mode === 'real' ? 'Memoria y planificación' : 'Mensajes fijos y tareas en memoria';
-  $('#message').placeholder = `Comparte una idea con ${agent.name}…`;
-  renderChat();
-  renderTasks();
-  renderVoice();
+ const agent=selected();if(!agent)return;
+ $('#selected-name').textContent=agent.name;$('#selected-role').textContent=agent.role.toUpperCase();$('#selected-status').textContent=agent.status==='running'?'Pensando contigo…':'Disponible · Hermes';
+ $('#selected-portrait').replaceChildren(portrait(agent.id));$('#profile-description').textContent=agent.description;$('#profile-model').textContent=agent.model||'Modo de prueba';$('#model-note').textContent=(agent.model||'').replace('gpt-','');
+ $('#profile-runtime').textContent=state.mode==='real'?'Hermes · tu suscripción':'Prueba explícita';$('#message').placeholder='Comparte una idea con '+agent.name+'…';renderChat();renderConnection();
 }
-function selectAgent(id) {
-  cancelVoice();
-  state.selected = id;
-  setStatus('');
-  document.querySelectorAll('[data-agent]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.agent === id)));
-  renderSelected();
+function renderConnection() {
+ $('#runtime-badge').textContent=state.connected?(state.mode==='real'?'● HERMES CONECTADO':'DEMO LOCAL'):'Conectando…';
+ $('#connection-label').textContent=state.connected?'En directo':'Reconectando…';$('#connection-light').style.background=state.connected?'#c1daa3':'#d7ac77';
+ $('#chat-mode-note').textContent=state.busy?'Hermes está respondiendo…':state.mode==='real'?'Conversación real':'Respuesta simulada';
+ $('#send-message').disabled=!state.connected||state.sending||Boolean(state.busy);
 }
-function renderVoice() {
-  const agent = state.agents.find(agent => agent.id === state.selected);
-  $('#voice-agent').textContent = agent?.name || 'el agente';
-  $('#voice-state').textContent = { disconnected: 'Desconectada', listening: 'Escucha · DEMO', responding: 'Respondiendo · DEMO' }[voiceStage];
-  $('.voice-demo-card').dataset.stage = voiceStage;
-  $('#voice-description').textContent = voiceDetail;
-  $('#voice-demo').disabled = !!voiceRun || !agent;
-  $('#voice-cancel').hidden = !voiceRun;
+function panelVisibility() { $('#chat-panel').inert=!desktop.matches&&!state.open;$('.studio-column').inert=!desktop.matches&&state.open;$('#chat-panel').setAttribute('role',desktop.matches?'complementary':'dialog');if(!desktop.matches&&state.open)$('#chat-panel').setAttribute('aria-modal','true');else $('#chat-panel').removeAttribute('aria-modal'); }
+function selectAgent(id) {state.selected=id;state.open=true;document.body.classList.add('chat-open');$('#chat-backdrop').hidden=desktop.matches;renderTeam();renderSelected();panelVisibility();switchTab('chat');if(!desktop.matches)$('#close-chat').focus({preventScroll:true});}
+function closeChat() {state.open=false;document.body.classList.remove('chat-open');$('#chat-backdrop').hidden=true;panelVisibility();$('#agent-list [data-agent="'+state.selected+'"]')?.focus({preventScroll:true});}
+function switchTab(tab) {state.tab=tab;for(const item of ['chat','profile']){$('#tab-'+item).setAttribute('aria-selected',String(tab===item));$('#panel-'+item).hidden=tab!==item;}}
+for(const tab of ['chat','profile'])$('#tab-'+tab).addEventListener('click',()=>switchTab(tab));
+$('#close-chat').addEventListener('click',closeChat);$('#chat-backdrop').addEventListener('click',closeChat);
+desktop.addEventListener('change',()=>{$('#chat-backdrop').hidden=desktop.matches||!state.open;panelVisibility();});
+let refreshing;
+async function refresh() {
+ if(refreshing)return refreshing;
+ refreshing=(async()=>{const data=await api('/api/studio');state.agents=data.agents;state.mode=data.mode;state.busy=data.busy;state.conversations=data.conversations||{};state.media=data.media||[];if(!state.selected)state.selected=data.agents[0]?.id;renderTeam();renderSelected();renderMedia();})();
+ try{await refreshing;}finally{refreshing=null;}
 }
-function cancelVoice(detail = 'Voz real desconectada. La prueba sólo muestra texto; no escucha ni reproduce audio.') {
-  if (voiceRun) {
-    clearTimeout(voiceRun.timer);
-    voiceRun.resolve?.(false);
-    voiceRun = null;
-  }
-  voiceStage = 'disconnected';
-  voiceDetail = detail;
-  renderVoice();
+function addEvent(type,data={},agentId) {
+ const name=state.agents.find(agent=>agent.id===agentId)?.name||'Hermes';
+ const descriptions={'runtime.ready':'Tu equipo está conectado a Hermes.','run.started':name+' está preparando una respuesta.','run.completed':name+' respondió.','run.failed':name+' no pudo completar la respuesta.','artifact.created':name+' añadió un resultado a la TV.'};
+ if(!descriptions[type])return;
+ state.events.unshift({text:descriptions[type],time:new Date()});state.events=state.events.slice(0,3);
+ $('#event-list').replaceChildren(...state.events.map(event=>{const li=node('li');const time=node('time',null,event.time.toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'}));time.dateTime=event.time.toISOString();li.append(node('i','status-dot'),node('span',null,event.text),time);return li;}));
 }
-function voiceDelay(milliseconds, run) {
-  return new Promise(resolve => {
-    run.resolve = resolve;
-    run.timer = setTimeout(() => { run.timer = null; run.resolve = null; resolve(voiceRun === run); }, milliseconds);
-  });
-}
-async function startVoiceDemo() {
-  const agent = state.agents.find(agent => agent.id === state.selected);
-  if (!agent || voiceRun) return;
-  const run = { agentId: agent.id, projectId: state.project, timer: null, resolve: null };
-  voiceRun = run;
-  const history = conversation();
-  voiceStage = 'listening';
-  voiceDetail = `Escucha simulada en la mesa de ${agent.name}. Texto de ejemplo: «¿Qué harías en la próxima misión?». No se está usando el micrófono.`;
-  renderVoice();
-  if (!await voiceDelay(1600, run)) return;
-  voiceStage = 'responding';
-  voiceDetail = `${agent.name} responde con texto simulado. No hay síntesis ni reproducción de audio.`;
-  history.push({ who: 'user', message: 'VOZ DEMO · texto de ejemplo: ¿Qué harías en la próxima misión?' });
-  history.push({ who: 'agent', message: `VOZ DEMO · guion local sin modelo ni audio. Soy ${agent.name}, ${agent.role}. Mi función propuesta es: ${agent.description}` });
-  renderChat();
-  renderVoice();
-  if (!await voiceDelay(2200, run)) return;
-  voiceRun = null;
-  voiceStage = 'disconnected';
-  voiceDetail = `Prueba terminada con ${agent.name}. El texto queda en esta conversación demo. La voz real sigue desconectada.`;
-  renderVoice();
-}
-function renderTasks() {
-  const tasks = state.tasks.filter(task => task.agentId === state.selected && task.projectId === state.project);
-  $('#task-count').textContent = tasks.length;
-  if (!tasks.length) {
-    $('#task-list').replaceChildren(element('p', 'empty-state', 'Aún no hay misiones para este agente en este proyecto. Crea la primera misión de demostración.'));
-    return;
-  }
-  const agent = state.agents.find(a => a.id === state.selected);
-  $('#task-list').replaceChildren(...tasks.map(task => {
-    const card = element('article', 'task');
-    card.style.setProperty('--agent-color', agentColor(agent));
-    const heading = element('div');
-    heading.append(element('h3', null, task.title), element('span', 'task-status', label(task.status)));
-    card.append(heading);
-    if (task.summary) card.append(element('p', null, task.summary));
-    if (task.requestId) {
-      card.append(element('p', 'linked-request', 'Parte de un cambio de UX. Nodo controla el siguiente traspaso desde la solicitud.'));
-    } else if (!['done', 'completed', 'cancelled'].includes(task.status)) {
-      const advance = element('button', null, 'Avanzar estado demo →');
-      advance.type = 'button';
-      advance.addEventListener('click', async () => {
-        advance.disabled = true;
-        try { await api(`/api/tasks/${encodeURIComponent(task.id)}/advance`, {}); await refresh(); setStatus('Estado actualizado en la simulación.'); }
-        catch (error) { setStatus(error.message); advance.disabled = false; }
-      });
-      card.append(advance);
-    }
-    return card;
-  }));
-}
-function switchTab(tab, focus = false) {
-  state.tab = tab;
-  document.querySelectorAll('[data-tab]').forEach(button => {
-    const selected = button.dataset.tab === tab;
-    button.setAttribute('aria-selected', String(selected));
-    button.tabIndex = selected ? 0 : -1;
-    if (selected && focus) button.focus();
-  });
-  ['chat', 'tasks', 'profile'].forEach(id => { $(`#panel-${id}`).hidden = id !== tab; });
-  setStatus('');
-}
-function addEvent(event) {
-  const agent = state.agents.find(a => a.id === event.agentId);
-  const type = String(event.type || 'studio.updated');
-  const descriptions = { 'studio.connected': 'El canal de eventos demo está conectado.', 'task.created': `Nueva misión demo para ${agent?.name || 'el equipo'}.`, 'task.updated': `Se actualizó una misión de ${agent?.name || 'el equipo'}.`, 'task.status_changed': `Una misión de ${agent?.name || 'el equipo'} avanzó de estado.`, 'message.created': `Mensaje demo enviado a ${agent?.name || 'un agente'}.`, 'message.received': `${agent?.name || 'Un agente'} respondió en la simulación.`, 'agent.message': `${agent?.name || 'Un agente'} respondió en la simulación.`, 'message.replied': `${agent?.name || 'Un agente'} respondió en la simulación.`, 'runtime.ready': 'La oficina de demostración está lista.' };
-  if (type === 'request.created') descriptions[type] = 'Nuevo cambio de UX demo. Nodo conserva la petición y sus dependencias.';
-  if (type === 'request.updated') descriptions[type] = 'El cambio de UX avanzó un traspaso simulado.';
-  if (state.mode === 'real') {
-    descriptions['run.started'] = `${agent?.name || 'Hermes'} está respondiendo con ${event.data?.model || 'su modelo'}.`;
-    descriptions['run.completed'] = `${agent?.name || 'Hermes'} respondió · ${event.data?.tokens?.total || 0} tokens.`;
-    descriptions['run.failed'] = `La conversación con ${agent?.name || 'Hermes'} encontró un error.`;
-    descriptions['agent.status'] = event.data?.tool ? `${agent?.name || 'Hermes'} · ${event.data.tool}` : `${agent?.name || 'Hermes'} disponible.`;
-    descriptions['runtime.ready'] = 'Oficina conectada a Hermes · suscripción ChatGPT.';
-  }
-  const message = descriptions[type] || `${agent?.name ? `${agent.name} · ` : ''}${type.replaceAll('.', ' / ').replaceAll('_', ' ')}`;
-  state.events.unshift({ message, timestamp: event.timestamp || new Date().toISOString() });
-  state.events = state.events.slice(0, 4);
-  renderEvents();
-}
-function renderEvents() {
-  $('#event-list').replaceChildren(...state.events.map(event => {
-    const item = element('li');
-    const time = element('time');
-    time.dateTime = event.timestamp;
-    const date = new Date(event.timestamp);
-    time.textContent = Number.isNaN(date.getTime()) ? 'ahora' : date.toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' });
-    item.append(element('span', 'event-dot'), element('span', null, event.message), time);
-    return item;
-  }));
-}
-function renderRequests() {
-  $('#request-project').textContent = state.projects.find(project => project.id === state.project)?.name || 'este proyecto';
-  const requests = state.requests.filter(request => request.projectId === state.project).toReversed();
-  if (!requests.length) {
-    $('#request-list').replaceChildren(element('p', 'empty-state', 'Todavía no hay cambios de UX en este proyecto. Una petición conserva su objetivo y criterios durante los cinco traspasos.'));
-    return;
-  }
-  $('#request-list').replaceChildren(...requests.map((request, index) => {
-    const card = element('article', 'request-card');
-    const heading = element('div', 'request-heading');
-    const number = requests.length - index;
-    heading.append(element('h3', null, `Cambio de UX ${String(number).padStart(2, '0')}`), element('span', 'request-badge', request.status === 'done' ? 'CERRADA · DEMO' : 'ACTIVA · DEMO'));
-    card.append(heading, element('p', 'request-description', request.description));
-    const stages = element('ol', 'request-stages');
-    stages.setAttribute('aria-label', 'Cadena de traspasos de la solicitud');
-    requestSteps.forEach((step, stepIndex) => {
-      const completed = request.status === 'done' || stepIndex < request.stageIndex;
-      const active = request.status !== 'done' && stepIndex === request.stageIndex;
-      const stage = element('li', completed ? 'complete' : active ? 'active' : 'waiting');
-      stage.append(element('span', 'step-index', completed ? '✓' : String(stepIndex + 1)), element('strong', null, step.name), element('small', null, step.detail));
-      if (active) stage.setAttribute('aria-current', 'step');
-      stages.append(stage);
-    });
-    card.append(stages);
-    const criteria = element('div', 'request-criteria');
-    criteria.append(element('h4', null, 'Criterios que acompañan la petición'));
-    const list = element('ul');
-    (request.acceptanceCriteria || []).forEach(criterion => list.append(element('li', null, criterion)));
-    criteria.append(list);
-    card.append(criteria);
-    if (request.evidence?.length) {
-      const evidence = element('details', 'request-evidence');
-      evidence.append(element('summary', null, `Evidencia simulada · ${request.evidence.length} registros`));
-      const items = element('ul');
-      request.evidence.forEach(item => items.append(element('li', null, typeof item === 'string' ? item : JSON.stringify(item))));
-      evidence.append(items);
-      card.append(evidence);
-    }
-    if (request.status !== 'done') {
-      const advance = element('button', 'advance-request', 'Simular siguiente traspaso →');
-      advance.type = 'button';
-      advance.addEventListener('click', async () => {
-        advance.disabled = true;
-        try { await api(`/api/requests/${encodeURIComponent(request.id)}/advance`, {}); await refresh(); $('#request-status').textContent = 'Traspaso simulado por Nodo. No se ejecutó trabajo ni se verificó un resultado real.'; }
-        catch (error) { $('#request-status').textContent = error.message; advance.disabled = false; }
-      });
-      card.append(advance);
-    } else {
-      card.append(element('p', 'request-complete', 'Cadena demo cerrada. Esta marca no acredita cambios de código ni validación real.'));
-    }
-    return card;
-  }));
-}
+let stream;
 function connectEvents() {
-  eventStream = new EventSource('/api/events');
-  eventStream.onopen = () => {
-    setConnection(true, state.mode === 'real' ? 'Hermes conectado · conversaciones reales' : 'Estudio conectado · simulación');
-    refresh().catch(() => setStatus('No se pudo actualizar el estado del estudio al reconectar.'));
-  };
-  eventStream.onerror = () => setConnection(false, 'Reconectando con el estudio…');
-  const handle = (message) => {
-    try {
-      const event = JSON.parse(message.data);
-      if (event.type === 'message.delta') {
-        if (state.live?.runId !== event.runId) state.live = { runId: event.runId, agentId: event.agentId, text: '' };
-        state.live.text += event.data.text || '';
-        renderChat();
-        return;
-      }
-      if (event.type === 'run.completed' || event.type === 'run.failed') state.live = null;
-      addEvent(event);
-      if (event.type?.startsWith('task.') || event.type?.startsWith('request.') || event.type?.startsWith('run.') || event.type === 'agent.status') refresh().catch(() => setStatus('No se pudo actualizar el estado.'));
-    } catch { setStatus('Se recibió un evento que no se pudo interpretar.'); }
-  };
-  eventStream.onmessage = handle;
-  // Compatible con eventos SSE nombrados, además del formato estándar "data:".
-  ['studio.connected', 'task.created', 'task.updated', 'task.status_changed', 'request.created', 'request.updated', 'message.created', 'message.replied', 'agent.message', 'runtime.ready'].forEach(type => eventStream.addEventListener(type, handle));
+ stream=new EventSource('/api/events');
+ stream.onopen=()=>{state.connected=true;renderConnection();refresh().catch(()=>status('No se pudo actualizar el estado.'));};
+ stream.onerror=()=>{state.connected=false;renderConnection();};
+ stream.onmessage=event=>{
+  try {
+   const packet=JSON.parse(event.data);
+   if(packet.type==='message.delta'){if(state.live?.runId!==packet.runId)state.live={runId:packet.runId,agentId:packet.agentId,text:''};state.live.text+=packet.data.text||'';renderChat();return;}
+   if(packet.type==='run.completed'||packet.type==='run.failed')state.live=null;
+   if(packet.type==='artifact.created')state.tvId=packet.data.asset.id;
+   addEvent(packet.type,packet.data,packet.agentId);
+   if(['run.started','run.completed','run.failed','agent.status','artifact.created'].includes(packet.type))refresh().catch(()=>status('No se pudo actualizar el estudio.'));
+  }catch{status('No se pudo interpretar una actualización.');}
+ };
 }
+$('#chat-form').addEventListener('submit',async event=>{
+ event.preventDefault();const input=$('#message');const message=input.value.trim();if(!message||!state.selected||state.sending||state.busy)return;
+ const agentId=state.selected;state.sending=true;const chat=state.conversations[agentId]||={messages:[]};chat.messages.push({who:'user',message});input.value='';renderChat();renderConnection();status('Hermes está preparando su respuesta…');
+ try {
+  const result=await api('/api/messages',{agentId,projectId:'studio',message,clientMessageId:crypto.randomUUID()});state.live=null;
+  if(state.mode==='real')await refresh();else{chat.messages.push({who:'agent',message:result.reply});renderChat();}
+  if(state.selected===agentId)status(result.media?.length?'Resultado publicado en la TV.':result.model+' · respuesta de Hermes');
+ }catch(error){state.live=null;await refresh().catch(()=>{});status(error.message);}
+ finally{state.sending=false;renderConnection();}
+});
+$('#message').addEventListener('keydown',event=>{if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();if(!$('#send-message').disabled)$('#chat-form').requestSubmit();}});
 
-$('#project').addEventListener('change', event => {
-  cancelVoice();
-  state.project = event.target.value;
-  setStatus('Contexto cambiado. Esta demo no abre ni modifica el repositorio del juego.');
-  renderSelected();
-  renderRequests();
-  $('#request-status').textContent = '';
-});
-$('#request-form').addEventListener('submit', async event => {
-  event.preventDefault();
-  const description = $('#request-description').value.trim();
-  if (!description) return;
-  const projectId = state.project;
-  const button = event.currentTarget.querySelector('button');
-  button.disabled = true;
-  $('#request-status').textContent = 'Creando la cadena demo…';
-  try {
-    await api('/api/requests', { projectId, description });
-    $('#request-description').value = '';
-    await refresh();
-    $('#request-status').textContent = 'Petición conservada con cinco fases y dependencias. Vera recibe el brief demo; no se ha iniciado ningún agente real.';
-  } catch (error) { $('#request-status').textContent = error.message; }
-  finally { button.disabled = false; }
-});
-$('#voice-demo').addEventListener('click', startVoiceDemo);
-$('#voice-cancel').addEventListener('click', () => cancelVoice('Prueba cancelada. No se ha capturado ni reproducido audio.'));
-document.querySelectorAll('[data-tab]').forEach(button => {
-  button.addEventListener('click', () => switchTab(button.dataset.tab));
-  button.addEventListener('keydown', event => {
-    const tabs = ['chat', 'tasks', 'profile'];
-    if (['ArrowRight', 'ArrowLeft', 'Home', 'End'].includes(event.key)) {
-      event.preventDefault();
-      const index = event.key === 'Home' ? 0 : event.key === 'End' ? 2 : (tabs.indexOf(state.tab) + (event.key === 'ArrowRight' ? 1 : 2)) % 3;
-      switchTab(tabs[index], true);
-    }
-  });
-});
-$('#chat-form').addEventListener('submit', async event => {
-  event.preventDefault();
-  const input = $('#message');
-  const message = input.value.trim();
-  if (!message || !state.selected || state.sending || state.busy) return;
-  const agentId = state.selected;
-  const projectId = state.project;
-  const history = conversation();
-  history.push({ who: 'user', message });
-  input.value = '';
-  renderChat();
-  $('#send-message').disabled = true;
-  state.sending = true;
-  setStatus(state.mode === 'real' ? 'Hermes está preparando su respuesta…' : 'Preparando respuesta demo…');
-  try {
-    const response = await api('/api/messages', { agentId, projectId, message, clientMessageId: crypto.randomUUID() });
-    state.live = null;
-    if (state.mode === 'real') await refresh();
-    else history.push({ who: 'agent', message: typeof response.reply === 'string' ? response.reply : response.reply?.message || response.reply?.text || 'Respuesta de demostración recibida.' });
-    if (agentId === state.selected && projectId === state.project) renderChat();
-    setStatus(state.mode === 'real' ? `${response.model} · respuesta real de Hermes · ${response.tokens?.total || 0} tokens` : 'Respuesta fija de demostración. No se consultó un modelo.');
-  } catch (error) {
-    state.live = null;
-    if (state.mode === 'real') await refresh().catch(() => {});
-    setStatus(`Mensaje sin respuesta: ${error.message}`);
-  }
-  finally { state.sending = false; $('#send-message').disabled = !state.connected || Boolean(state.busy); }
-});
-$('#message').addEventListener('keydown', event => {
-  if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); if (!$('#send-message').disabled) $('#chat-form').requestSubmit(); }
-});
-$('#task-form').addEventListener('submit', async event => {
-  event.preventDefault();
-  const input = $('#task-title');
-  const title = input.value.trim();
-  if (!title || !state.selected) return;
-  const button = event.currentTarget.querySelector('button');
-  button.disabled = true;
-  try { await api('/api/tasks', { agentId: state.selected, projectId: state.project, title }); input.value = ''; await refresh(); setStatus('Misión creada en memoria. Ningún agente real se ha iniciado.'); }
-  catch (error) { setStatus(error.message); }
-  finally { button.disabled = false; }
+// Galería y TV comparten el mismo resultado. El vídeo se reproduce sólo por acción del usuario.
+let currentMediaId=null;
+function mediaElement(asset) {
+ const el=node(asset.kind==='video'?'video':'img');
+ el.src=asset.url;
+ if(asset.kind==='video'){el.controls=true;el.playsInline=true;el.preload='metadata';el.setAttribute('aria-label',asset.title);}
+ else{el.alt=asset.title;el.loading='lazy';}
+ el.addEventListener('error',()=>{$('#media-status').textContent='No se pudo abrir este archivo. Comprueba su formato o códec.';if(el.closest('#viewer-content')){$('#viewer-status').textContent='Este navegador no puede reproducir el archivo. Puedes descargar el original para abrirlo en otro reproductor.';$('#media-download').hidden=false;}});
+ return el;
+}
+function showMedia(id) {
+ const asset=state.media.find(item=>item.id===id);if(!asset)return;
+ currentMediaId=id;state.tvId=id;renderTV();$('#viewer-status').textContent='';$('#media-download').hidden=true;$('#media-download').href=asset.url;$('#media-download').download='hermes-'+asset.id+(asset.kind==='video'?'.'+asset.mime.split('/')[1]:'.'+(asset.mime==='image/svg+xml'?'svg':asset.mime.split('/')[1]));
+ $('#viewer-title').textContent=asset.title;$('#viewer-owner').textContent=origin(asset).toUpperCase();$('#viewer-content').querySelectorAll('video').forEach(video=>video.pause());$('#viewer-content').replaceChildren(mediaElement(asset));$('#tv-screen video')?.pause();
+ const index=state.media.findIndex(item=>item.id===id);$('#viewer-count').textContent=(index+1)+' / '+state.media.length;$('#media-prev').disabled=index===0;$('#media-next').disabled=index===state.media.length-1;
+ if(!$('#media-viewer').open)$('#media-viewer').showModal();
+}
+function renderTV() {
+ const asset=state.media.find(item=>item.id===state.tvId)||state.media[0];
+ const key=asset?.id||'empty';if($('#tv-screen').dataset.mediaId===key)return;$('#tv-screen').dataset.mediaId=key;
+ const tv=$('#tv-screen');tv.querySelectorAll('video').forEach(video=>video.pause());tv.replaceChildren();
+ if(!asset){const button=node('button');button.type='button';button.innerHTML=icon('tv');button.append(node('span','tv-empty-label','LA PRÓXIMA GRAN IDEA'),node('span','tv-empty-caption','Pide un gráfico a tu equipo'));button.addEventListener('click',()=>askPrisma());tv.append(button);return;}
+ if(asset.kind==='video')tv.append(mediaElement(asset));
+ else{const button=node('button');button.type='button';button.setAttribute('aria-label','Ampliar '+asset.title);button.append(mediaElement(asset));button.addEventListener('click',()=>showMedia(asset.id));tv.append(button);}
+}
+function askPrisma(){selectAgent('prisma');$('#message').value='Crea una composición visual para nuestra oficina y muéstrala en la TV.';$('#message').focus();}
+function renderMedia() {
+ const gallery=$('#media-gallery');gallery.replaceChildren();
+ if(!state.media.length){const empty=node('div','gallery-empty');const graphic=node('span');graphic.innerHTML=icon('tv');const copy=node('div');copy.append(node('b',null,'La próxima gran idea va aquí.'),node('p',null,'Pide un gráfico a un agente o añade una imagen o vídeo.'));const button=node('button',null,'Crear con Prisma ↗');button.type='button';button.addEventListener('click',askPrisma);empty.append(graphic,copy,button);gallery.append(empty);}
+ for(const asset of state.media) {
+  const card=node('button','media-card');card.type='button';card.setAttribute('aria-label','Ver '+asset.title);
+  if(asset.kind==='image'){const image=mediaElement(asset);image.className='media-thumbnail';card.append(image);}
+  else{const placeholder=node('div','video-placeholder');placeholder.innerHTML=icon('play');card.append(placeholder);}
+  const info=node('div');info.append(node('b',null,asset.title),node('small',null,origin(asset)));card.append(node('span','media-kind',asset.kind==='video'?'VÍDEO':asset.mime==='image/svg+xml'?'VECTOR':'IMAGEN'),info);card.addEventListener('click',()=>showMedia(asset.id));gallery.append(card);
+ }
+ renderTV();
+}
+$('#close-viewer').addEventListener('click',()=>$('#media-viewer').close());
+$('#media-viewer').addEventListener('close',()=>{$('#viewer-content').querySelectorAll('video').forEach(video=>video.pause());});
+for(const [id,offset] of [['media-prev',-1],['media-next',1]])$('#'+id).addEventListener('click',()=>{const index=state.media.findIndex(item=>item.id===currentMediaId);const next=state.media[index+offset];if(next)showMedia(next.id);});
+$('#attach-media').addEventListener('click',()=>{$('#upload-agent').value=state.selected;$('#upload-status').textContent='';$('#upload-dialog').showModal();});
+$('#close-upload').addEventListener('click',()=>$('#upload-dialog').close());
+$('#upload-file').addEventListener('change',()=>{if(!$('#upload-name').value)$('#upload-name').value=($('#upload-file').files[0]?.name||'').replace(/\.[^.]+$/,'').slice(0,140);});
+$('#upload-form').addEventListener('submit',async event=>{
+ event.preventDefault();const file=$('#upload-file').files[0];if(!file)return;const button=$('#upload-form button[type=submit]');button.disabled=true;$('#upload-status').textContent='Guardando el resultado…';
+ try {
+  if(file.size>25*1024*1024)throw new Error('El archivo supera 25 MB.');
+  const params=new URLSearchParams({agentId:$('#upload-agent').value,title:$('#upload-name').value});
+  const response=await fetch('/api/media?'+params,{method:'POST',headers:{'Content-Type':file.type||'application/octet-stream'},body:file});const data=await response.json();if(!response.ok)throw new Error(data.error);
+  state.tvId=data.asset.id;await refresh();$('#upload-dialog').close();$('#upload-form').reset();showMedia(data.asset.id);$('#media-status').textContent='Resultado adjunto guardado en la TV.';
+ }catch(error){$('#upload-status').textContent=error.message;}finally{button.disabled=false;}
 });
 
-function rect(context, x, y, w, h, color) { context.fillStyle = color; context.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h)); }
-function pixelText(text, x, y, color = '#e9e6cf', size = 8, align = 'center') {
-  ctx.font = `${size}px "Courier New", monospace`;
-  ctx.textAlign = align;
-  ctx.fillStyle = '#24312b';
-  ctx.fillText(text, Math.round(x) + 1, Math.round(y) + 1);
-  ctx.fillStyle = color;
-  ctx.fillText(text, Math.round(x), Math.round(y));
+// Navegación: colisiones, rutas al tocar, zoom centrado y cámara que sigue al personaje.
+const viewport=$('#office-viewport');
+let frame=0,lastTime=0,nearest=null,transform={x:0,y:0,zoom:camera.zoom};
+function resize(){const box=viewport.getBoundingClientRect();camera.width=box.width;camera.height=box.height;}
+new ResizeObserver(resize).observe(viewport);resize();
+function updateCamera() {
+ transform=cameraTransform(camera);camera.tx=transform.x;camera.ty=transform.y;
+ $('#office-world').style.transform='translate('+transform.x.toFixed(2)+'px,'+transform.y.toFixed(2)+'px) scale('+camera.zoom.toFixed(4)+')';
+ $('#zoom-label').textContent=Math.round(camera.zoom*100)+'%';$('#camera-follow').setAttribute('aria-pressed',String(camera.follow));
 }
-function drawRoom() {
-  drawStudioRoom(ctx, { agents: state.agents, selected: state.selected, colors });
+function setZoom(value,anchor) {
+ const next=Math.max(.12,Math.min(1.65,value));
+ if(anchor&&!camera.follow){const wx=(anchor.x-transform.x)/camera.zoom,wy=(anchor.y-transform.y)/camera.zoom;camera.x=wx-(anchor.x-camera.width/2)/next;camera.y=wy-(anchor.y-camera.height/2)/next;}
+ camera.zoom=next;updateCamera();
 }
-function drawCharacter(context, x, y, color, kind, facing = 'down', step = 0, scale = 2) {
-  drawAgentCharacter(context, x, y, { id: kind, tint: color, facing, step, scale });
+function walkTo(target) {player.path=findPath(player,target);if(player.path.length){camera.follow=true;$('#walk-tip').style.opacity='0';}return player.path.length>0;}
+function move(dx,dy){const x=player.x+dx,y=player.y+dy;if(walkable(x,player.y))player.x=x;if(walkable(player.x,y))player.y=y;if(Math.abs(dx)>.1)player.facing=dx>0?1:-1;}
+function interact(){if(nearest?.id==='tv'){if(state.media.length)showMedia(state.tvId||state.media[0].id);else askPrisma();}else if(nearest)selectAgent(nearest.id);}
+function tick(time) {
+ const dt=Math.min(.04,(time-lastTime)/1000||.016);lastTime=time;
+ let dx=Number(keys.has('d')||keys.has('arrowright'))-Number(keys.has('a')||keys.has('arrowleft'));
+ let dy=Number(keys.has('s')||keys.has('arrowdown'))-Number(keys.has('w')||keys.has('arrowup'));
+ if(dx||dy){player.path=[];camera.follow=true;const length=Math.hypot(dx,dy);dx=dx/length*235*dt;dy=dy/length*235*dt;move(dx,dy);$('#walk-tip').style.opacity='0';}
+ else if(player.path.length){const next=player.path[0],distance=Math.hypot(next.x-player.x,next.y-player.y);if(distance<5)player.path.shift();else{const amount=Math.min(distance,235*dt);dx=(next.x-player.x)/distance*amount;dy=(next.y-player.y)/distance*amount;move(dx,dy);}}
+ const sprite=$('#player-sprite');sprite.setAttribute('transform','translate('+player.x.toFixed(1)+' '+player.y.toFixed(1)+')');sprite.classList.toggle('walking',Boolean(dx||dy));sprite.querySelector('.sprite-player').setAttribute('transform','scale('+player.facing+' 1)');
+ sprite.dataset.x=Math.round(player.x);sprite.dataset.y=Math.round(player.y);
+ if(camera.follow){const ease=reduced.matches?1:Math.min(1,dt*8);camera.x+=(player.x-camera.x)*ease;camera.y+=(player.y-130-camera.y)*ease;}
+ updateCamera();
+ const candidates=state.agents.map(agent=>({...agent,distance:Math.hypot(player.x-AGENT_SPOTS[agent.id].x,player.y-AGENT_SPOTS[agent.id].y)}));
+ candidates.push({id:'tv',name:'la TV',distance:Math.hypot(player.x-1320,player.y-520)});
+ nearest=candidates.filter(candidate=>candidate.distance<105).sort((a,b)=>a.distance-b.distance)[0]||null;
+ $('#touch-interact').disabled=!nearest;$('#interact-label').textContent=nearest?(nearest.id==='tv'?'Ver la TV':'Hablar con '+nearest.name):'Acércate a una mesa';
+ const lounge=player.x>1035;$('#zone-label').textContent=lounge?'SALA DE PROYECCIÓN':'OFICINA CREATIVA';$('#go-lounge').classList.toggle('active',lounge);$('#go-work').classList.toggle('active',!lounge);
+ frame=requestAnimationFrame(tick);
 }
-function canMove(x, y) {
-  if (x < 57 || x > 775 || y < 118 || y > 450) return false;
-  const margin = 9;
-  return !obstacles.some(o => x + margin > o.x && x - margin < o.x + o.w && y > o.y - 2 && y - 15 < o.y + o.h);
+$('#zoom-in').addEventListener('click',()=>setZoom(camera.zoom+.12));$('#zoom-out').addEventListener('click',()=>setZoom(camera.zoom-.12));
+$('#camera-fit').addEventListener('click',()=>{camera.follow=false;camera.x=WORLD.width/2;camera.y=WORLD.height/2;setZoom(Math.min(camera.width/WORLD.width,camera.height/WORLD.height)*.96);});
+$('#camera-follow').addEventListener('click',()=>{camera.follow=true;setZoom(desktop.matches ? .72 : .84);});
+$('#reset-position').addEventListener('click',()=>{player.x=500;player.y=900;player.path=[];keys.clear();camera.follow=true;viewport.focus({preventScroll:true});});
+$('#go-lounge').addEventListener('click',()=>walkTo({x:1320,y:530}));
+$('#go-work').addEventListener('click',()=>walkTo({x:500,y:850}));
+$('#touch-interact').addEventListener('click',interact);
+const pointers=new Map();let gesture=null;
+function localPoint(event){const box=viewport.getBoundingClientRect();return{x:event.clientX-box.left,y:event.clientY-box.top};}
+function gestureStart(){
+ const points=[...pointers.values()];
+ if(points.length===1)gesture={point:points[0],initial:points[0],x:camera.x,y:camera.y,moved:false};
+ else if(points.length===2)gesture={pinch:Math.hypot(points[0].x-points[1].x,points[0].y-points[1].y),zoom:camera.zoom,moved:true};
 }
-function updatePlayer(dt, now) {
-  let dx = (keys.has('arrowright') || keys.has('d') ? 1 : 0) - (keys.has('arrowleft') || keys.has('a') ? 1 : 0);
-  let dy = (keys.has('arrowdown') || keys.has('s') ? 1 : 0) - (keys.has('arrowup') || keys.has('w') ? 1 : 0);
-  player.walking = !!(dx || dy);
-  if (dx || dy) {
-    const length = Math.hypot(dx, dy); const distance = Math.min(dt, .05) * 137;
-    dx = dx / length * distance; dy = dy / length * distance;
-    if (canMove(player.x + dx, player.y)) player.x += dx;
-    if (canMove(player.x, player.y + dy)) player.y += dy;
-    player.facing = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up');
-  }
-  let closest = null; let distance = 57;
-  state.agents.forEach((agent, i) => {
-    const table = desks[agent.id];
-    if (!table) return;
-    const dx = Math.max(table.x - player.x, 0, player.x - (table.x + table.w));
-    const dy = Math.max(table.y - player.y, 0, player.y - (table.y + table.h));
-    const d = Math.hypot(dx, dy);
-    if (d < distance) { closest = agent; distance = d; }
-  });
-  if (nearest?.id !== closest?.id) {
-    nearest = closest;
-    $('#interaction-hint').hidden = !nearest;
-    $('#nearby-name').textContent = nearest ? `${nearest.name} · ${nearest.role}` : '';
-  }
-}
-function draw(now) {
-  const dt = (now - lastFrame) / 1000; lastFrame = now;
-  updatePlayer(dt, now);
-  drawRoom();
-  const characters = state.agents.map((agent, index) => ({ agent, ...agentSpot(agent, index) }));
-  characters.push({ isPlayer: true, x: player.x, y: player.y });
-  characters.sort((a, b) => a.y - b.y).forEach(character => {
-    if (character.isPlayer) {
-      drawPlayerAvatar(ctx, player.x, player.y, { facing: player.facing, step: player.walking ? now / 95 : 0, scale: 2 });
-      pixelText('TÚ', player.x, player.y - 67, '#eef3d5', 8);
-    } else {
-      const { agent, x, y } = character;
-      if (agent.id === state.selected) {
-        ctx.strokeStyle = agentColor(agent); ctx.lineWidth = 1;
-        ctx.strokeRect(x - 17, y - 4, 35, 9);
-      }
-      drawCharacter(ctx, x, y, agentColor(agent), agent.id, 'down', 0, 2);
-      const close = nearest?.id === agent.id;
-      rect(ctx, x - 29, y + 9, 58, 14, '#314b3ee6');
-      pixelText(agent.name.toUpperCase(), x, y + 19, close ? '#f1f3d7' : '#d5dfbb', 8);
-      if (close) { rect(ctx, x - 7, y - 76, 15, 14, '#e0e9b8'); pixelText('E', x + .5, y - 66, '#35573d', 9); }
-    }
-  });
-  animationFrame = requestAnimationFrame(draw);
-}
-function interact() {
-  if (!nearest) { setStatus('Acércate a una mesa rotulada o selecciona su agente en la lista del equipo.'); return; }
-  selectAgent(nearest.id); switchTab('chat');
-  setStatus(`Mesa de ${nearest.name} · ${nearest.role}. ${state.mode === 'real' ? 'Escríbele para conversar con su perfil de Hermes.' : 'Puedes escribirle o probar la voz DEMO.'}`);
-  if (window.matchMedia('(max-width:820px)').matches) $('.agent-panel').scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'nearest' });
-}
-const movementKeys = ['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'];
-window.addEventListener('keydown', event => {
-  if (event.target.closest('input,textarea,select,[contenteditable=true]') || event.altKey || event.ctrlKey || event.metaKey) return;
-  const key = event.key.toLowerCase();
-  if (movementKeys.includes(key) && !event.target.closest('[role=tablist]')) { event.preventDefault(); keys.add(key); }
-  if (key === 'e' && !event.repeat) { event.preventDefault(); interact(); }
+viewport.addEventListener('pointerdown',event=>{
+ if(event.target.closest('button,video,[data-office-agent]'))return;
+ viewport.setPointerCapture(event.pointerId);pointers.set(event.pointerId,localPoint(event));gestureStart();viewport.focus({preventScroll:true});
 });
-window.addEventListener('keyup', event => keys.delete(event.key.toLowerCase()));
-window.addEventListener('blur', () => keys.clear());
-document.addEventListener('visibilitychange', () => { if (document.hidden) keys.clear(); });
-$('#reset-position').addEventListener('click', () => { player.x = 460; player.y = 439; keys.clear(); canvas.focus(); });
-$('#touch-interact').addEventListener('click', interact);
-document.querySelectorAll('[data-direction]').forEach(button => {
-  const key = `arrow${button.dataset.direction}`;
-  button.addEventListener('pointerdown', event => { event.preventDefault(); button.setPointerCapture(event.pointerId); keys.add(key); });
-  ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(type => button.addEventListener(type, () => keys.delete(key)));
+viewport.addEventListener('pointermove',event=>{
+ if(!pointers.has(event.pointerId)||!gesture)return;pointers.set(event.pointerId,localPoint(event));const points=[...pointers.values()];
+ if(points.length===2&&gesture.pinch){setZoom(gesture.zoom*Math.hypot(points[0].x-points[1].x,points[0].y-points[1].y)/gesture.pinch);gesture.moved=true;}
+ else if(points.length===1&&gesture.point){const point=points[0],dx=point.x-gesture.point.x,dy=point.y-gesture.point.y;if(Math.hypot(dx,dy)>6||gesture.moved){gesture.moved=true;camera.follow=false;camera.x=gesture.x-dx/camera.zoom;camera.y=gesture.y-dy/camera.zoom;updateCamera();}}
 });
-canvas.addEventListener('click', event => {
-  const bounds = canvas.getBoundingClientRect(); const x = (event.clientX - bounds.left) / bounds.width * 832; const y = (event.clientY - bounds.top) / bounds.height * 512;
-  const agent = state.agents.find((agent, index) => { const point = agentSpot(agent, index); const table = desks[agent.id]; return Math.abs(x - point.x) < 28 && Math.abs(y - (point.y - 15)) < 43 || table && x >= table.x && x <= table.x + table.w && y >= table.y && y <= table.y + table.h; });
-  if (agent) { selectAgent(agent.id); switchTab('chat'); }
-  canvas.focus();
+viewport.addEventListener('pointerup',event=>{
+ if(!pointers.has(event.pointerId))return;const point=localPoint(event),tap=gesture&&!gesture.moved&&pointers.size===1;pointers.delete(event.pointerId);
+ if(tap)walkTo({x:(point.x-transform.x)/camera.zoom,y:(point.y-transform.y)/camera.zoom});
+ if(pointers.size)gestureStart();else gesture=null;
 });
-switchTab('chat');
-animationFrame = requestAnimationFrame(draw);
-try {
-  await refresh();
-  setConnection(true, state.mode === 'real' ? 'Hermes conectado · conversaciones reales' : 'Estudio conectado · simulación');
-  addEvent({ type: 'runtime.ready' });
-  connectEvents();
-} catch (error) {
-  setConnection(false, 'Servidor local no disponible');
-  $('#agent-list').replaceChildren(element('p', 'loading', 'No se pudo cargar el equipo. Abre esta página desde el servidor local del proyecto.'));
-  setStatus(`No se cargó el estudio: ${error.message}`);
+viewport.addEventListener('pointercancel',()=>{pointers.clear();gesture=null;});
+viewport.addEventListener('wheel',event=>{event.preventDefault();setZoom(camera.zoom*Math.exp(-event.deltaY*.0015),localPoint(event));},{passive:false});
+const movement=['w','a','s','d','arrowup','arrowleft','arrowdown','arrowright'];
+window.addEventListener('keydown',event=>{
+ if(event.key==='Escape'&&state.open&&!$('#media-viewer').open&&!$('#upload-dialog').open){event.preventDefault();closeChat();return;}
+ if(event.key==='Tab'&&!desktop.matches&&state.open){const focusable=[...$('#chat-panel').querySelectorAll('button:not(:disabled),textarea,input,select')].filter(el=>el.getClientRects().length);const first=focusable[0],last=focusable.at(-1);if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}}
+ if(event.target.closest('input,textarea,select,button')||$('#media-viewer').open||$('#upload-dialog').open)return;
+ const key=event.key.toLowerCase();if(movement.includes(key)){event.preventDefault();keys.add(key);}if(key==='e'){event.preventDefault();interact();}if(key==='Escape'&&state.open)closeChat();
+});
+window.addEventListener('keyup',event=>keys.delete(event.key.toLowerCase()));
+window.addEventListener('blur',()=>keys.clear());
+document.addEventListener('visibilitychange',()=>{if(document.hidden){keys.clear();player.path=[];}});
+for(const button of document.querySelectorAll('[data-direction]')) {
+ const key='arrow'+button.dataset.direction;let downAt=0;
+ button.addEventListener('pointerdown',event=>{event.preventDefault();button.setPointerCapture(event.pointerId);downAt=performance.now();keys.add(key);});
+ for(const type of ['pointerup','pointercancel','lostpointercapture'])button.addEventListener(type,()=>keys.delete(key));
+ button.addEventListener('click',()=>{if(performance.now()-downAt<180||downAt===0){const offsets={up:[0,-60],down:[0,60],left:[-60,0],right:[60,0]};const[dx,dy]=offsets[button.dataset.direction];walkTo({x:player.x+dx,y:player.y+dy});}});
 }
-window.addEventListener('pagehide', () => { cancelVoice(); eventStream?.close(); cancelAnimationFrame(animationFrame); });
+panelVisibility();frame=requestAnimationFrame(tick);
+try{await refresh();state.connected=true;renderConnection();addEvent('runtime.ready');connectEvents();}
+catch(error){state.connected=false;renderConnection();status(error.message);}
+window.addEventListener('pagehide',()=>{stream?.close();cancelAnimationFrame(frame);keys.clear();document.querySelectorAll('video').forEach(video=>video.pause());});

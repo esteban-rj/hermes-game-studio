@@ -4,11 +4,12 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { makeDemo, InputError } from './lib/demo.mjs';
 import { makeHermes } from './lib/hermes.mjs';
+import { makeMedia, MAX_MEDIA_BYTES, byteRange } from './lib/media.mjs';
 
 const root = path.dirname(fileURLToPath(import.meta.url));
 const publicRoot = path.join(root, 'public');
 const types = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.json': 'application/json; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png' };
-export function createStudioServer({ port = 4317, runtime } = {}) {
+export function createStudioServer({ port = 4317, runtime, media } = {}) {
   if (!runtime) throw new Error('Se requiere un runtime explícito. El inicio normal usa Hermes real.');
   const demo = runtime;
   const streams = new Set();
@@ -25,8 +26,40 @@ export function createStudioServer({ port = 4317, runtime } = {}) {
     function json(status, data) { res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' }); res.end(JSON.stringify(data)); }
     try {
       const url = new URL(req.url, `http://${host}`);
-      if (req.method === 'GET' && url.pathname === '/api/health') return json(200, { ok: true, mode: demo.snapshot().mode, version: '0.2.0' });
+      if (req.method === 'GET' && url.pathname === '/api/health') return json(200, { ok: true, mode: demo.snapshot().mode, version: '0.3.0' });
       if (req.method === 'GET' && url.pathname === '/api/studio') return json(200, demo.snapshot());
+      if (req.method === 'GET' && url.pathname === '/api/media') return json(200, { items: media?.list() || [] });
+      const mediaContent = url.pathname.match(/^\/api\/media\/([a-f0-9-]{36})\/content$/);
+      if (mediaContent && ['GET','HEAD'].includes(req.method) && media) {
+        const { item, bytes } = await media.content(mediaContent[1]);
+        let range;
+        try { range = byteRange(req.headers.range, bytes.length); }
+        catch (error) { res.setHeader('Content-Range', `bytes */${bytes.length}`); throw error; }
+        res.setHeader('Content-Security-Policy', "default-src 'none'; style-src 'unsafe-inline'; sandbox");
+        res.setHeader('Content-Type', item.mime);
+        res.setHeader('Accept-Ranges', 'bytes');
+        res.setHeader('Content-Disposition', 'inline');
+        if (range) {
+          res.setHeader('Content-Range', `bytes ${range.start}-${range.end}/${bytes.length}`);
+          res.setHeader('Content-Length', range.end - range.start + 1);
+          res.writeHead(206);
+          res.end(req.method === 'HEAD' ? undefined : bytes.subarray(range.start, range.end + 1));
+        } else {
+          res.setHeader('Content-Length', bytes.length);
+          res.writeHead(200);
+          res.end(req.method === 'HEAD' ? undefined : bytes);
+        }
+        return;
+      }
+      if (req.method === 'POST' && url.pathname === '/api/media' && media) {
+        if (demo.snapshot().mode !== 'real') throw new InputError('La galería requiere Hermes real.', 409);
+        if (Number(req.headers['content-length']) > MAX_MEDIA_BYTES) throw new InputError('El archivo supera 25 MB.', 413);
+        const chunks = []; let size = 0;
+        for await (const chunk of req) { size += chunk.length; if (size > MAX_MEDIA_BYTES) throw new InputError('El archivo supera 25 MB.', 413); chunks.push(chunk); }
+        const asset = await media.upload({ bytes: Buffer.concat(chunks), agentId: url.searchParams.get('agentId'), title: url.searchParams.get('title') });
+        demo.notifyArtifact?.(asset);
+        return json(201, { asset });
+      }
       if (req.method === 'GET' && url.pathname === '/api/events') {
         if (streams.size >= 20) return json(503, { error: 'Demasiadas conexiones al estudio.' });
         res.writeHead(200, { 'Content-Type': 'text/event-stream; charset=utf-8', Connection: 'keep-alive', 'X-Accel-Buffering': 'no' });
@@ -84,8 +117,9 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   if (!Number.isInteger(port) || port < 1024 || port > 65535) throw new Error('STUDIO_PORT debe estar entre 1024 y 65535.');
   const mode = process.env.STUDIO_MODE || 'real';
   if (!['real','demo'].includes(mode)) throw new Error('STUDIO_MODE debe ser real o demo.');
-  const runtime = mode === 'real' ? await makeHermes({ root }) : makeDemo();
-  const { server, closeStreams } = createStudioServer({ port, runtime });
+  const media = mode === 'real' ? await makeMedia({ root }) : null;
+  const runtime = mode === 'real' ? await makeHermes({ root, media }) : makeDemo();
+  const { server, closeStreams } = createStudioServer({ port, runtime, media });
   server.listen(port, '127.0.0.1', () => console.log(`Hermes Game Studio ${mode.toUpperCase()} · http://127.0.0.1:${port}\n${runtime.snapshot().notice}`));
   function stop() { closeStreams(); server.close(); }
   process.on('SIGINT', stop);

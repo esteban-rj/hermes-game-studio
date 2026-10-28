@@ -9,6 +9,7 @@ import { makeHermes, runHermesProcess } from '../lib/hermes.mjs';
 import { resolveModel } from '../scripts/resolve-model.mjs';
 import { createStudioServer } from '../server.mjs';
 import { once } from 'node:events';
+import { makeMedia } from '../lib/media.mjs';
 
 async function fixture(runProcess) {
   const root = await mkdtemp(path.join(tmpdir(), 'studio-hermes-'));
@@ -21,6 +22,19 @@ async function fixture(runProcess) {
   return { root, installation, runProcess };
 }
 const input = (agentId, clientMessageId, message = 'Mensaje de prueba') => ({ agentId, clientMessageId, message, projectId: 'studio' });
+
+test('el resultado gráfico de Hermes llega al historial, la galería y el evento sin duplicarse', async () => {
+  const fence = String.fromCharCode(96).repeat(3);
+  const options = await fixture(async () => ({ session_id:'graphic-session', text:'Composición lista.\n'+fence+'studio-media\n'+JSON.stringify({title:'Resultado vectorial',elements:[{type:'circle',cx:100,cy:100,r:40,fill:'#aacc99'}]})+'\n'+fence, tokens:{total:3} }));
+  const media = await makeMedia({root:options.root});
+  const runtime = await makeHermes({...options,media});
+  const response = await runtime.message(input('prisma','graphic-message'));
+  assert.equal(response.media.length,1);assert.equal(response.reply,'Composición lista.');
+  assert.equal(runtime.snapshot().conversations.prisma.messages.at(-1).media[0].id,response.media[0].id);
+  assert.equal(runtime.events.find(event=>event.type==='artifact.created').data.asset.id,response.media[0].id);
+  await runtime.message(input('prisma','graphic-message'));
+  assert.equal(media.list().length,1);
+});
 
 test('Hermes conserva sesiones y conversaciones por agente y reinicio', async () => {
   const calls = [];

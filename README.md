@@ -1,8 +1,10 @@
 # Hermes Game Studio
 
-Oficina pixel art local para conversar con seis perfiles de **Hermes Agent**.
+Oficina vectorial local para conversar con seis perfiles de **Hermes Agent**.
 
-**v0.2 · conversaciones reales.** El backend ejecuta Hermes con tu suscripción
+**v0.3 · estudio vectorial y móvil.** Agentes animados, un mundo de 1660 × 1080,
+cámara con seguimiento y zoom, y una sala con sofá y TV para resultados reales.
+El backend ejecuta Hermes con tu suscripción
 ChatGPT/Codex y muestra su respuesta en streaming. Los errores se muestran sin
 sustituirlos por respuestas predefinidas. Cada agente conserva su sesión e historial.
 
@@ -22,7 +24,11 @@ También puedes ejecutar `Launch.ps1`. Abre **http://127.0.0.1:4317**. El inicio
 normal usa Hermes real. Si falta instalación o autenticación, falla con una
 explicación y no vuelve a una simulación. `STUDIO_PORT` permite cambiar el puerto.
 
-Muévete con WASD/flechas y pulsa E cerca de una mesa, o elige un agente en la lista.
+Muévete con WASD/flechas, la cruceta táctil o tocando el suelo. Pulsa E cerca de
+una mesa, o elige un agente en la lista. En móvil, el chat abre un panel inferior.
+Arrastra para explorar; pellizca o usa +/− para acercar. El botón de ubicación
+recupera el seguimiento y el de mapa muestra toda la oficina. «Sala TV» lleva al
+personaje hasta el sofá siguiendo una ruta que evita muebles.
 Escribe un mensaje; Enter envía y Shift+Enter añade una línea. Sólo se admite un
 turno a la vez. El perfil muestra modelo, runtime y herramientas disponibles.
 
@@ -45,8 +51,20 @@ con su primera respuesta real. [Política de modelos](docs/SUBSCRIPTION.md).
 
 La oficina conecta conversación, memoria y planificación mediante perfiles
 `studio-<agente>`. El CLI recibe sólo `todo,memory`. No se ofrecen terminal,
-edición, Git, voz, navegador o generación de imágenes desde la UI. Las misiones
+edición, Git, voz ni navegador desde la UI. Las misiones
 y traspasos simulados se ocultan y sus rutas se rechazan en modo real.
+
+Pide a un agente un gráfico para la TV: su composición declarativa se valida y
+renderiza como SVG, y aparece en la pantalla, galería y conversación. También
+puedes adjuntar PNG/JPG/WebP/GIF o MP4/WebM de hasta 25 MB. Los adjuntos se
+identifican como tales; no se atribuyen a generación de Hermes. El reproductor
+incluye controles, vista ampliada y rangos HTTP para buscar dentro del vídeo.
+La compatibilidad de códecs depende del navegador; se ofrece descarga si falla.
+Esta conexión no sintetiza vídeos ni usa un servicio de imágenes de pago.
+
+Los gráficos se construyen con primitivas permitidas; no se ejecuta HTML/SVG
+arbitrario del modelo. Los archivos y el índice quedan bajo `.runtime`, fuera
+de Git. Ver [contrato de medios](contracts/README.md).
 
 Para código con Git local en un juego, usa perfiles y worktrees explícitos según
 [PROJECTS.md](docs/PROJECTS.md). Sus nombres y rutas reales permanecen en

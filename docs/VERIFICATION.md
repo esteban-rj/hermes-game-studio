@@ -1,5 +1,23 @@
 # Verificación del estudio
 
+## v0.3 · oficina vectorial y sala de proyección · 28 de octubre de 2026
+
+- SVG completo para habitación y siete personajes, con animaciones por rol y
+  estados walking/working. Renderer Canvas anterior retirado.
+- Viewports 390 × 844 y 1440 × 1000: selección, panel móvil, mapa, zoom y TV.
+- Navegación móvil hasta la sala: personaje observado en x1320/y529 y cámara
+  desplazada; el botón contextual pasó a «Ver la TV».
+- Prisma, mediante Hermes/Terra real, produjo «Ideas en movimiento»; el servidor
+  construyó su SVG y lo mostró en TV, galería y enlace dentro del chat.
+- Subida desde selector de archivos comprobada. MP4 válido reproducido hasta
+  0:05/0:05 en el visor móvil; un fixture WebM no reproducible mostró el fallo
+  de códec. Se añadió explicación y descarga del original para estos casos.
+- Clips temporales de QA retirados de la galería. El arte real de Prisma se conserva.
+- 17/17 tests automáticos con fixtures, sin inferencia; 23 archivos JSON/JS válidos.
+  Incluyen persistencia/atribución de gráficos, integración Hermes → historial →
+  evento, deduplicación, rangos de vídeo, aislamiento y rutas sin colisiones.
+- La emulación de viewport no acredita una prueba en hardware iOS/Android.
+
 ## v0.2 · conversaciones reales · 28 de octubre de 2026
 
 - Inicio normal en modo real con Hermes v0.22.5 y OAuth de la suscripción.

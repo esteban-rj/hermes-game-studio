@@ -16,6 +16,18 @@ La oficina representa agentes y runs; no ejecuta el modelo. Hermes conserva iden
 
 En v0.2 la conversación usa Hermes real mediante el CLI JSONL oficial y eventos SSE del estudio. Las líneas punteadas siguen pendientes. No hay despacho de tareas de juegos, autenticación multiusuario ni control de escritorio. Para tareas durables se evaluará Kanban nativo antes de construir un planificador propio.
 
+En v0.3 el cliente usa SVG para personajes, props y oficina, con animaciones CSS
+por rol y soporte de movimiento reducido. Un mundo ampliado comparte geometría
+con colisiones, búsqueda de rutas y la cámara. La capa de TV usa imagen/vídeo HTML
+en las mismas coordenadas del mundo. El chat móvil es un panel con foco acotado.
+
+`lib/media.mjs` recibe composiciones declarativas del resultado real de Hermes,
+valida tipos, coordenadas, colores y tamaño, y construye SVG sin admitir scripts
+ni referencias externas. El backend guarda archivos e índice privados, emite
+`artifact.created` y enlaza el resultado al chat. Los adjuntos se identifican
+por contenido, conservan procedencia distinta y se sirven con rangos HTTP.
+El backend no genera vídeo ni ejecuta un renderer de código del modelo.
+
 ## Entorno inicial
 
 | Alternativa | Ventaja | Límite | Uso recomendado |
