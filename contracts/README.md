@@ -40,6 +40,16 @@ conserva hasta 200 entradas en `.runtime/hermes-office/media/`, sin rutas privad
 en la respuesta HTTP. Los vídeos requieren un códec que reproduzca el navegador;
 el servidor no convierte ni sintetiza vídeo.
 
+## Uso de Codex en v0.4
+
+`GET /api/codex-usage` requiere modo real y conserva las restricciones Host/Origin.
+Devuelve `status`, `source`, `fetchedAt`, `tokens.lifetime`, `tokens.latestDay`
+(date/tokens), y `buckets` con ventanas de porcentaje utilizado/disponible,
+duración y reinicio. Un dato ausente es `null`, no cero. No se convierte cuota
+en un conteo de tokens. `stale: true` identifica una lectura anterior tras fallo.
+`?refresh=1` solicita refresco, limitado a uno cada 15 s; caché normal de 60 s.
+No admite comandos, modelos, perfiles ni métodos RPC proporcionados por el cliente.
+
 ## Modo de regresión explícito (contrato histórico)
 
 La tabla y las simulaciones siguientes documentan únicamente `STUDIO_MODE=demo`.

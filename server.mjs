@@ -5,11 +5,12 @@ import { fileURLToPath } from 'node:url';
 import { makeDemo, InputError } from './lib/demo.mjs';
 import { makeHermes } from './lib/hermes.mjs';
 import { makeMedia, MAX_MEDIA_BYTES, byteRange } from './lib/media.mjs';
+import { makeCodexUsage } from './lib/codex-usage.mjs';
 
 const root = path.dirname(fileURLToPath(import.meta.url));
 const publicRoot = path.join(root, 'public');
 const types = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.json': 'application/json; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png' };
-export function createStudioServer({ port = 4317, runtime, media } = {}) {
+export function createStudioServer({ port = 4317, runtime, media, usage } = {}) {
   if (!runtime) throw new Error('Se requiere un runtime explícito. El inicio normal usa Hermes real.');
   const demo = runtime;
   const streams = new Set();
@@ -26,8 +27,12 @@ export function createStudioServer({ port = 4317, runtime, media } = {}) {
     function json(status, data) { res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' }); res.end(JSON.stringify(data)); }
     try {
       const url = new URL(req.url, `http://${host}`);
-      if (req.method === 'GET' && url.pathname === '/api/health') return json(200, { ok: true, mode: demo.snapshot().mode, version: '0.3.0' });
+      if (req.method === 'GET' && url.pathname === '/api/health') return json(200, { ok: true, mode: demo.snapshot().mode, version: '0.4.0' });
       if (req.method === 'GET' && url.pathname === '/api/studio') return json(200, demo.snapshot());
+      if (req.method === 'GET' && url.pathname === '/api/codex-usage') {
+        if (!usage || demo.snapshot().mode !== 'real') return json(503, {error:'Uso de Codex no disponible.'});
+        return json(200, await usage.get({force:url.searchParams.get('refresh')==='1'}));
+      }
       if (req.method === 'GET' && url.pathname === '/api/media') return json(200, { items: media?.list() || [] });
       const mediaContent = url.pathname.match(/^\/api\/media\/([a-f0-9-]{36})\/content$/);
       if (mediaContent && ['GET','HEAD'].includes(req.method) && media) {
@@ -119,7 +124,8 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   if (!['real','demo'].includes(mode)) throw new Error('STUDIO_MODE debe ser real o demo.');
   const media = mode === 'real' ? await makeMedia({ root }) : null;
   const runtime = mode === 'real' ? await makeHermes({ root, media }) : makeDemo();
-  const { server, closeStreams } = createStudioServer({ port, runtime, media });
+  const usage = mode === 'real' ? makeCodexUsage() : null;
+  const { server, closeStreams } = createStudioServer({ port, runtime, media, usage });
   server.listen(port, '127.0.0.1', () => console.log(`Hermes Game Studio ${mode.toUpperCase()} · http://127.0.0.1:${port}\n${runtime.snapshot().notice}`));
   function stop() { closeStreams(); server.close(); }
   process.on('SIGINT', stop);

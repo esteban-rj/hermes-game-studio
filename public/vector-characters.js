@@ -16,6 +16,19 @@ function legs(p) {
   <g class="sprite-leg-right"><path d="M1-30h11l3 22c1 4-2 6-6 6S3-4 3-8Z" fill="${p.pants}"/><path d="M3-8c3 2 7 2 11 0l3 6c1 3-1 4-3 4H5C2 2 1 0 2-3Z" fill="${p.shoes}"/><path d="M5-1h10" stroke="#9aacc1" stroke-width="1.3" stroke-linecap="round"/></g>`;
 }
 
+function seatedLegs(p) {
+  return `<g class="sprite-seated-legs"><path d="M-12-30h24l12 13-6 14h-9l5-12-14-7-14 7 5 12h-9l-6-14Z" fill="${p.pants}"/><path d="m-18-8 9-1 4 8c1 2-1 3-3 3h-13c-3 0-4-3-2-5Zm27-1 9 1 5 5c2 2 1 5-2 5H8C6 2 4 1 5-1Z" fill="${p.shoes}"/><path d="M-20-1h12m16 0h12" stroke="#9aacc1" stroke-width="1.3"/></g>`;
+}
+
+function sleepingArms(p) {
+  return `<g class="sprite-sleep-arms"><path d="M-18-46q-10 9-6 22l7 5 5-7-5-4 5-12m30-4q10 9 6 22l-7 5-5-7 5-4-5-12" fill="${p.shirt}"/><path d="m-22-26 7 2 1 7c0 4-5 5-7 2l-3-6Zm44 0-7 2-1 7c0 4 5 5 7 2l3-6Z" fill="${p.skin}"/></g>`;
+}
+
+function sleepLetters(p) {
+  // Paths keep the sleep cue independent of font availability and create no IDs.
+  return `<g class="sprite-sleep-letters" fill="none" stroke="${p.light}" stroke-width="2.7"><path class="sprite-sleep-z sprite-sleep-z-one" d="M17-91h7l-7 8h7"/><path class="sprite-sleep-z sprite-sleep-z-two" d="M23-105h8l-8 9h8"/><path class="sprite-sleep-z sprite-sleep-z-three" d="M28-120h9l-9 10h9"/></g>`;
+}
+
 function head(id, p) {
   const rearHair = id === 'prisma'
     ? `<path d="M-17-82c-7 13-8 27-2 36l8-3 12-1 17 2c4-14 4-24-3-35Z" fill="${p.hair}"/>`
@@ -36,6 +49,7 @@ function head(id, p) {
   <path d="M-18-83c0-12 8-17 18-17s18 5 18 17v10c0 12-8 20-18 20s-18-8-18-20Z" fill="${p.skin}"/>
   <path d="M-16-71c1 8 5 14 11 16-9-1-13-8-13-17v-10l3-4Z" fill="${p.shade}" opacity=".35"/>
   ${hair}<g class="sprite-eyes" fill="${ink}"><ellipse cx="-8" cy="-74" rx="1.8" ry="2.5"/><ellipse cx="8" cy="-74" rx="1.8" ry="2.5"/></g>
+  ${id === 'player' ? '' : `<path class="sprite-closed-eyes" d="M-12-74q4 4 8 0m8 0q4 4 8 0" fill="none" stroke="${ink}" stroke-width="1.8"/>`}
   <path d="m-12-81 6-1m12 0 6 1" stroke="${p.hair}" stroke-width="1.8" stroke-linecap="round"/>
   <path d="m0-73-2 6 3 1" fill="none" stroke="${p.shade}" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
   <ellipse cx="-11" cy="-67" rx="3" ry="1.6" fill="#e88b83" opacity=".32"/><ellipse cx="11" cy="-67" rx="3" ry="1.6" fill="#e88b83" opacity=".32"/>
@@ -68,12 +82,17 @@ function armsAndTools(id, p, portrait) {
 }
 
 /** SVG inner markup; the parent SVG controls the viewBox and world position. */
-export function characterMarkup(id, { portrait = false } = {}) {
+export function characterMarkup(id, { portrait = false, activity = 'idle' } = {}) {
   const key = Object.hasOwn(presets, id) ? id : 'player';
   const p = presets[key];
-  return `<g class="sprite sprite-${key}${portrait ? ' sprite-portrait' : ''}" stroke-linecap="round" stroke-linejoin="round">
+  const isAgent = key !== 'player';
+  const activityClass = isAgent ? (activity === 'working' ? ' is-working' : ' is-sleeping') : '';
+  const body = isAgent
+    ? `<g class="sprite-standing-legs">${legs(p)}</g>${seatedLegs(p)}<g class="sprite-body">${outfit(key, p)}<g class="sprite-head">${head(key, p)}</g><g class="sprite-work-arms">${armsAndTools(key, p, false)}</g>${sleepingArms(p)}</g>${sleepLetters(p)}`
+    : `${legs(p)}<g class="sprite-body">${outfit(key, p)}${head(key, p)}${armsAndTools(key, p, portrait)}</g>`;
+  return `<g class="sprite sprite-${key}${portrait ? ' sprite-portrait' : ''}${activityClass}" stroke-linecap="round" stroke-linejoin="round">
     <ellipse class="sprite-shadow" cx="0" cy="2" rx="22" ry="5" fill="#304955" opacity=".16"/>
-    ${legs(p)}<g class="sprite-body">${outfit(key, p)}${head(key, p)}${armsAndTools(key, p, portrait)}</g>
+    ${body}
   </g>`;
 }
 
@@ -105,6 +124,31 @@ export const characterStyles = `
 .walking .sprite-player .sprite-arm-right,.sprite-player.walking .sprite-arm-right{animation:vector-swing .42s ease-in-out -.21s infinite}
 .sprite-portrait .sprite-shadow{display:none}
 .sprite-portrait .sprite-arm{animation:none}
+.sprite .sprite-seated-legs,.sprite .sprite-sleep-arms,.sprite .sprite-closed-eyes,.sprite .sprite-sleep-letters{display:none}
+.sprite.is-working .sprite-standing-legs{display:none}
+.sprite.is-working .sprite-seated-legs{display:inline}
+.sprite.is-working .sprite-body{animation:vector-work-breathe 2.8s ease-in-out infinite}
+.sprite.is-working .sprite-head{transform:translate(0,2px) rotate(-3deg);transform-origin:0px -55px}
+.sprite.is-working .sprite-work-arms{transform:translateY(-4px)}
+.sprite.is-working .sprite-tool{animation:vector-work-tool 2.4s ease-in-out infinite}
+.sprite.is-working .sprite-arm{animation-duration:1.1s}
+.sprite.is-working.sprite-prisma .sprite-arm-right{animation-duration:1.8s}
+.sprite.is-working.sprite-lupa .sprite-arm-right{animation-duration:2.2s}
+.sprite.is-sleeping .sprite-work-arms,.sprite.is-sleeping .sprite-eyes{display:none}
+.sprite.is-sleeping .sprite-sleep-arms,.sprite.is-sleeping .sprite-closed-eyes,.sprite.is-sleeping .sprite-sleep-letters{display:inline}
+.sprite.is-sleeping .sprite-work-arms *{animation:none!important}
+.sprite.is-sleeping .sprite-body{animation:vector-sleep-breathe 5s ease-in-out infinite;transform-origin:0px -26px}
+.sprite.is-sleeping .sprite-head{animation:vector-sleep-nod 5s ease-in-out infinite;transform-origin:0px -55px}
+.sprite.is-sleeping .sprite-shadow{animation-duration:5s}
+.sprite .sprite-sleep-z{animation:vector-sleep-rise 3.6s ease-in-out infinite;opacity:.85}
+.sprite .sprite-sleep-z-two{animation-delay:-1.2s}
+.sprite .sprite-sleep-z-three{animation-delay:-2.4s}
+.sprite-portrait.is-working .sprite-arm{animation:none}
+@keyframes vector-work-breathe{0%,100%{transform:translateY(0)}50%{transform:translateY(-.7px) rotate(-.5deg)}}
+@keyframes vector-work-tool{0%,100%{transform:rotate(-1deg)}50%{transform:rotate(2deg) translateY(-.7px)}}
+@keyframes vector-sleep-breathe{0%,100%{transform:translateY(1px) rotate(1deg)}50%{transform:translateY(-.5px) rotate(2deg)}}
+@keyframes vector-sleep-nod{0%,100%{transform:translate(2px,3px) rotate(10deg)}50%{transform:translate(2px,5px) rotate(15deg)}}
+@keyframes vector-sleep-rise{0%{transform:translate(-2px,4px);opacity:0}20%{opacity:.9}75%{opacity:.75}100%{transform:translate(2px,-4px);opacity:0}}
 @keyframes vector-breathe{0%,100%{transform:translateY(0)}50%{transform:translateY(-1.5px)}}
 @keyframes vector-blink{0%,42%,45%,76%,79%,100%{transform:scaleY(1)}43.5%,77.5%{transform:scaleY(.08)}}
 @keyframes vector-shadow{0%,100%{transform:scaleX(1);opacity:.16}50%{transform:scaleX(.94);opacity:.13}}
@@ -121,4 +165,5 @@ export const characterStyles = `
 @keyframes vector-walk-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
 @keyframes vector-swing{0%,100%{transform:rotate(-9deg)}50%{transform:rotate(9deg)}}
 @media(prefers-reduced-motion:reduce){.sprite *{animation:none!important;transition:none!important}}
+@media(prefers-reduced-motion:reduce){.sprite.is-sleeping .sprite-head{transform:translate(2px,4px) rotate(12deg)}.sprite .sprite-sleep-z{opacity:.85}}
 `;

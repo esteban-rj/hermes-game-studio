@@ -28,6 +28,15 @@ ni referencias externas. El backend guarda archivos e índice privados, emite
 por contenido, conservan procedencia distinta y se sirven con rangos HTTP.
 El backend no genera vídeo ni ejecuta un renderer de código del modelo.
 
+La v0.4 enlaza los estados `running/idle` de Hermes a postura y posición del
+personaje, y a monitor/lámpara del escritorio. La escena no produce estados
+autónomos de trabajo. La TV secundaria consulta `lib/codex-usage.mjs`: proceso
+Codex App Server por stdio, handshake y únicamente `account/rateLimits/read` y
+`account/usage/read`. Normaliza un subconjunto de métricas antes de servir HTTP;
+IDs de cuenta/créditos, credenciales y errores originales no se exponen ni guardan.
+La caché comparte peticiones durante 60 s, conserva la hora de una lectura vieja
+si hay fallo y acota el refresco manual a 15 s. No se crea ningún thread o turn.
+
 ## Entorno inicial
 
 | Alternativa | Ventaja | Límite | Uso recomendado |

@@ -2,11 +2,24 @@
 
 Oficina vectorial local para conversar con seis perfiles de **Hermes Agent**.
 
-**v0.3 · estudio vectorial y móvil.** Agentes animados, un mundo de 1660 × 1080,
+**v0.4 · turno nocturno.** Agentes animados, un mundo de 1660 × 1080,
 cámara con seguimiento y zoom, y una sala con sofá y TV para resultados reales.
 El backend ejecuta Hermes con tu suscripción
 ChatGPT/Codex y muestra su respuesta en streaming. Los errores se muestran sin
 sustituirlos por respuestas predefinidas. Cada agente conserva su sesión e historial.
+
+La oficina usa colores oscuros, cielo nocturno y lámparas cálidas. Un agente
+inactivo duerme con ZZZ; mientras Hermes procesa su petición, se sienta en la
+mesa, mueve sus herramientas y enciende monitor y luz de trabajo. Al terminar
+o fallar vuelve a descansar. El estado procede del runtime, sin actividad fingida.
+
+Una segunda TV muestra actividad real de tokens de Codex y cuota disponible.
+Se amplía tocándola o con «Codex» en la barra. Usa el CLI Codex autenticado que
+ya exista en PATH, mediante consultas oficiales de sólo lectura: no crea turns,
+no solicita modelos ni consume resets. Es opcional; sin CLI o datos disponibles
+se indica la ausencia. Tokens acumulados y último día publicado son métricas de
+la cuenta, separadas de los porcentajes de cuota. La lectura se refresca cada
+minuto con la página visible; muestra hora y antigüedad si falla la actualización.
 
 ## Iniciar
 

@@ -1,8 +1,10 @@
 # Oficina vectorial con Hermes real
 
-La v0.3 usa una escena SVG de 1660 × 1080. Los seis agentes tienen animaciones
-propias de respiración, parpadeo y herramientas; el personaje del usuario tiene
-marcha animada. Las animaciones respetan la preferencia de movimiento reducido.
+La v0.4 usa una escena SVG nocturna de 1660 × 1080, con luna y estrellas, muebles
+oscuros y lámparas cálidas. Los agentes inactivos duermen con ojos cerrados y ZZZ.
+Al recibir una petición real se sientan en la mesa con movimiento de herramientas,
+monitor y lámpara encendidos. Vuelven a dormir al terminar o fallar. El personaje
+del usuario conserva su marcha; las animaciones respetan movimiento reducido.
 
 1. Inicia el servidor y abre http://127.0.0.1:4317.
 2. Selecciona un agente en la fila del equipo o toca su personaje en el mundo.
@@ -20,6 +22,10 @@ marcha animada. Las animaciones respetan la preferencia de movimiento reducido.
    conserva la diferencia entre un adjunto y un resultado de Hermes. La vista
    ampliada permite navegar entre resultados; el vídeo tiene controles nativos.
    Si el navegador no reproduce el códec, ofrece descargar el archivo original.
+8. La pequeña TV «CODEX · USO» muestra tokens acumulados, último día con datos y
+   cuota disponible. Tócala o abre «Codex» en la barra para ver cifras completas,
+   ventanas de cuota, reinicios y hora de lectura. Tokens y porcentajes se muestran
+   como unidades distintas. No se inventan ceros ni ventanas ausentes.
 
 La base CSS está diseñada para móvil y añade columnas de escritorio a 1100 px.
 Los controles táctiles tienen áreas de 44 px; la entrada de texto móvil usa 16 px.

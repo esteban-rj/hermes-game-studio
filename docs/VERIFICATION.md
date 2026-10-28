@@ -1,5 +1,24 @@
 # Verificación del estudio
 
+## v0.4 · noche, actividad real y TV de Codex · 28 de octubre de 2026
+
+- Oficina con muebles oscuros, ventana nocturna, luna/estrellas y luz cálida.
+- Seis agentes inactivos con ojos cerrados, cabeceo y ZZZ. El jugador conserva
+  sus controles y animación independientes.
+- Petición real a Atlas/Sol: se observaron `agent-figure selected working` y
+  `vr-station is-working`, postura sentada, herramientas y luz encendidas.
+  Tras la respuesta: `agent-figure selected sleeping` y escritorio sin actividad.
+- TV secundaria y panel ampliado reciben métricas reales de Codex App Server:
+  tokens acumulados, último día publicado y cuota con su propia ventana/reinicio.
+  No se publican identificadores ni se confunde porcentaje con tokens.
+- Panel comprobado a 1440 × 1000 y 390 × 844; cifras legibles y cierre por botón
+  y Escape, sin mover al personaje detrás del diálogo.
+- El protocolo ejecutado sólo inicializó y consultó `account/rateLimits/read`
+  y `account/usage/read`. Sin threads, turns, modelos ni consumo de resets.
+- 21/21 tests con fixtures; 25 archivos JSON/JS válidos. Incluyen normalización,
+  privacidad, API no disponible, compatibilidad parcial, caché/deduplicación y
+  rechazo de origen HTTP externo. Las pruebas automáticas no llaman modelos.
+
 ## v0.3 · oficina vectorial y sala de proyección · 28 de octubre de 2026
 
 - SVG completo para habitación y siete personajes, con animaciones por rol y
