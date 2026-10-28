@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "kind": "studio-agent-catalog",
-  "note": "Metadatos propios del estudio; NO es configuración nativa de Hermes. Rutas seleccionadas en config/model-routing.json: suscripción ChatGPT/Codex, Sol 6.1 como máximo. Acceso real y conexión de la oficina pendientes de verificación.",
+  "note": "Metadatos propios del estudio; NO es configuración nativa de Hermes. La oficina v0.2 conecta conversaciones reales por suscripción, con Sol 6.1 como máximo. Cada perfil acredita acceso con su primera respuesta y no se simula ejecución de tareas.",
   "agents": [
     {
       "id": "atlas",

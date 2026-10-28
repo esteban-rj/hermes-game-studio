@@ -1,18 +1,18 @@
-# Integración de Hermes: CLI instalado, conexión de la oficina pendiente
+# Integración de Hermes: conversaciones reales en la oficina
 
 Decisión posterior, 28 de octubre de 2026: **suscripción ChatGPT/Codex y Sol 6.1
 como máximo**. Ver [rutas elegidas y límites](SUBSCRIPTION.md). El preparador ahora
 usa `config/model-routing.json` y rechaza proveedores de API de pago y modelos
-fuera de la lista. Hermes está instalado para uso CLI; la oficina sigue sin
-conectarse al runtime.
+fuera de la lista. Hermes está instalado y autenticado. La oficina conecta conversaciones reales
+mediante JSONL del CLI; las herramientas de código siguen pendientes.
 
 Revisión: 28 de octubre de 2026. Instalación oficial de Windows en canal estable:
 **Hermes v0.22.5**, commit `bf0203a794a07aac3ff764972ab9087baa4e4f4e`.
 El comando informó Python 3.14.9 y OpenAI SDK 2.24.0. Fuente, dependencias y datos
 están fuera del Git del estudio; `.runtime/hermes-install.local.json` guarda las
 rutas locales. El instalador se ejecutó sin setup interactivo, navegador de
-automatización, control del escritorio ni desktop adicional. No se inició un
-gateway ni inferencia. Una copia nueva del repositorio necesita su instalación
+automatización, control del escritorio ni desktop adicional. La conversación
+actual inicia el gateway nativo mediante el CLI. Una copia nueva necesita instalación
 y registro locales propios.
 
 ```powershell
@@ -39,10 +39,9 @@ CLIs. No introducir claves ni tokens en el repositorio o en prompts.
   exige workspace, toma proveedor/modelo de la política elegida y rechaza
   sobrescrituras y overrides fuera de la lista autorizada.
 
-Hay seis perfiles nativos `studio-<agente>` preparados, sin herramientas de
-terminal. Crear perfiles no crea un equipo en ejecución. No existe todavía un
-proceso Hermes conectado a la oficina. El adaptador demo no utiliza credenciales
-ni modelos.
+Hay seis perfiles nativos `studio-<agente>` conectados a conversación, sin
+herramientas de terminal desde la UI. `lib/hermes.mjs` inicia el CLI oficial, recibe
+JSONL, reanuda sesiones y conserva mensajes bajo `.runtime`. Los tests usan fixtures.
 
 ## Compatibilidad contrastada
 
@@ -163,10 +162,10 @@ parte del catálogo TUI; el adaptador deberá consultar capacidades, comprobar e
 perfil y rechazar funciones ausentes antes de aceptar trabajo.
 [Integración programática oficial](https://hermes-agent.nousresearch.com/docs/developer-guide/programmatic-integration).
 
-Propuesta: evaluar primero HTTP/SSE para la oficina y TUI JSON-RPC si necesitamos
-control fino de permisos y sesiones. El backend del estudio será el único cliente
-de Hermes y normalizará los eventos. Todavía no hay conexión, URL de runtime ni
-endpoint de inferencia configurado en esta entrega.
+La conexión v0.2 usa JSONL del CLI (`chat --query-file - --oneshot --format
+stream-json`), que actúa como cliente del gateway nativo. El backend fija perfil,
+modelo y proveedor, envía texto por stdin y reanuda por session_id. HTTP/SSE y
+JSON-RPC quedan como alternativas para un control de permisos y cancelación mayor.
 
 ## Kanban nativo durable: propuesta por juego
 
@@ -208,7 +207,7 @@ Para nuestro flujo durable preferimos perfiles por rol y tareas Kanban; evaluar
 ese plugin sólo para consultas hijas acotadas que lo necesiten.
 [Plugin oficial](https://hermes-agent.nousresearch.com/docs/plugins/advanced-delegation).
 
-La plantilla mantiene `max_turns: 20`, `api_max_retries: 1`, profundidad 1 y un
+La plantilla mantiene `max_turns: 4`, `run_budget_seconds: 90`, `api_max_retries: 1`, profundidad 1 y un
 máximo de dos hijos; el toolset de delegación no está habilitado. La política
 propuesta del estudio permite dos ciclos de revisión y dos seguimientos por
 tarea. Esos límites y el presupuesto monetario deberán imponerse en el adaptador,

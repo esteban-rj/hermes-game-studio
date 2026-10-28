@@ -1,6 +1,28 @@
 # Contrato HTTP del estudio, v1
 
-Es una API propia. No implica que Hermes tenga estas rutas. El adaptador real futuro deberá traducir su resultado a estos eventos.
+Es una API propia; no implica que Hermes tenga estas rutas. El adaptador de
+conversación real traduce el protocolo JSONL oficial a estos eventos.
+
+## Conversación real en v0.2
+
+`POST /api/messages` requiere `agentId`, `projectId: "studio"`, `message` y un
+`clientMessageId` único de 8–100 caracteres alfanuméricos, guion o guion bajo.
+Espera el resultado de Hermes y devuelve `mode: "real"`, `reply`, `runId`,
+`sessionId`, `model` y `tokens`. No reintenta. Un mismo ID y payload reutiliza
+el resultado durante el proceso; reutilizarlo para otro payload devuelve 409.
+Sólo se admite un turno concurrente; un segundo devuelve 409.
+
+`GET /api/studio` incluye historiales locales por agente y el turno activo.
+SSE emite `run.started`, `message.delta`, `agent.status`, `run.completed` y
+`run.failed`. Los deltas de conversación se envían sólo al navegador local;
+el registro de actividad muestra estados, sin copiar el texto a sus entradas.
+El historial se persiste, pero los IDs SSE y la deduplicación son del proceso.
+Una desconexión requiere refrescar el snapshot; no volver a enviar el mensaje
+automáticamente. Los endpoints de tareas y solicitudes devuelven 409.
+
+## Modo de regresión explícito
+
+La tabla y las simulaciones siguientes documentan únicamente `STUDIO_MODE=demo`.
 
 | Ruta | Entrada | Salida |
 | --- | --- | --- |

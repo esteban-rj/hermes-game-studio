@@ -1,9 +1,9 @@
 {
   "name": "hermes-game-studio",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
-  "description": "Oficina local y contratos para un estudio de videojuegos con Hermes Agent; runtime demo explícito.",
+  "description": "Oficina local con conversaciones reales y perfiles Hermes Agent mediante suscripción ChatGPT/Codex.",
   "engines": { "node": ">=22" },
   "scripts": {
     "start": "node server.mjs",

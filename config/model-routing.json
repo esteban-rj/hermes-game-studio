@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "status": "selected-not-connected",
-  "note": "Política del estudio, no configuración nativa de Hermes. Selección autorizada: suscripción ChatGPT/Codex y GPT-6.1 Sol como modelo máximo. El acceso a cada modelo sigue pendiente de una inferencia real.",
+  "status": "hermes-conversations-connected",
+  "note": "Política del estudio, no configuración nativa de Hermes. Conversaciones por suscripción ChatGPT/Codex, con GPT-6.1 Sol como máximo. Cada perfil se verifica en su primera respuesta real; no hay fallback a API.",
   "billing": { "mode": "chatgpt-subscription", "allowApiBilling": false },
   "allowedProviders": ["openai-codex"],
   "allowedModels": ["gpt-6-luna", "gpt-6.1-terra", "gpt-6.1-sol"],

@@ -14,7 +14,7 @@ function renderPlayerPortrait() {
   drawPlayerAvatar(portraitContext, 20, 60, { scale: 2 });
 }
 renderPlayerPortrait();
-const state = { agents: [], tasks: [], projects: [], requests: [], selected: null, project: 'studio', chats: new Map(), events: [], connected: false, tab: 'chat' };
+const state = { agents: [], tasks: [], projects: [], requests: [], selected: null, project: 'studio', chats: new Map(), events: [], connected: false, tab: 'chat', mode: null, sending: false, busy: null, live: null };
 const spots = { atlas: { x: 170, y: 223 }, pixel: { x: 355, y: 223 }, prisma: { x: 655, y: 223 }, nodo: { x: 170, y: 392 }, ux: { x: 416, y: 392 }, lupa: { x: 655, y: 392 } };
 const desks = { atlas: { x: 102, y: 133, w: 134, h: 62 }, pixel: { x: 286, y: 133, w: 134, h: 62 }, prisma: { x: 588, y: 133, w: 134, h: 62 }, nodo: { x: 102, y: 304, w: 134, h: 62 }, ux: { x: 349, y: 304, w: 134, h: 62 }, lupa: { x: 588, y: 304, w: 134, h: 62 } };
 const archetypes = { atlas: 'El cartógrafo · capa violeta', pixel: 'El constructor · chaqueta azul', prisma: 'La artista · boina coral', nodo: 'El anfitrión · chaleco verde', ux: 'La diseñadora · chaqueta turquesa', lupa: 'La exploradora · abrigo amarillo' };
@@ -52,7 +52,23 @@ function setConnection(connected, message) {
   state.connected = connected;
   $('#connection-label').textContent = message;
   $('#connection-light').style.background = connected ? '#b5d68a' : '#dfb27f';
-  $('#send-message').disabled = !connected;
+  $('#send-message').disabled = !connected || state.sending || Boolean(state.busy);
+}
+function configureRuntime() {
+  const real = state.mode === 'real';
+  $('#runtime-badge').textContent = real ? '● HERMES CONECTADO' : 'DEMO LOCAL';
+  const responding = state.agents.find(agent => agent.id === state.busy?.agentId);
+  $('#chat-mode-note').textContent = real ? responding ? `${responding.name} está respondiendo · espera para enviar otro mensaje` : '◇ Tu suscripción · conversación real' : '◇ Respuesta simulada';
+  $('.ux-card').hidden = real;
+  $('.voice-demo-card').hidden = real;
+  $('#tab-tasks').hidden = real;
+  $('.project-picker > p').textContent = real ? 'Una sesión propia para cada agente' : 'Ejemplos ficticios · contextos separados';
+  $('.intro').textContent = real ? 'Cada agente tiene su mesa. Acércate para conversar, compartir ideas y planificar con tu equipo.' : 'Cada agente tiene su mesa. Acércate para conversar y probar el flujo de voz demo.';
+  $('.version').innerHTML = real ? 'HERMES<br><b>0.2</b>' : 'PROTOTIPO<br><b>0.1</b>';
+  $('.activity-card .section-title > span').textContent = real ? 'ACTIVIDAD REAL' : 'EVENTOS DEMO';
+  $('.simulation-note').textContent = real ? 'Hermes responde con tu suscripción. Cada agente conserva su conversación local. Las herramientas de código y la voz todavía no están conectadas a esta oficina.' : 'Las conversaciones y tareas son simuladas.';
+  canvas.setAttribute('aria-label', 'Oficina pixel art con seis mesas. Muévete con WASD o flechas y pulsa E para conversar con el agente. También puedes seleccionarlo en la lista del equipo.');
+  if (real && state.tab === 'tasks') switchTab('chat');
 }
 async function api(path, body) {
   const response = await fetch(path, body === undefined ? { cache: 'no-store' } : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
@@ -64,16 +80,24 @@ async function refresh() {
   if (refreshing) return refreshing;
   refreshing = (async () => {
     const data = await api('/api/studio');
+    state.mode = data.mode;
+    state.busy = data.busy || null;
+    if (data.conversations) {
+      for (const [agentId, chat] of Object.entries(data.conversations)) state.chats.set(`studio:${agentId}`, chat.messages || []);
+    }
     state.agents = data.agents;
     state.tasks = data.tasks;
     state.projects = data.projects;
     state.requests = data.requests || [];
+    if (!data.projects.some(project => project.id === state.project)) state.project = data.projects[0]?.id;
     if (!state.selected || !state.agents.some(agent => agent.id === state.selected)) state.selected = data.agents[0]?.id;
     renderPlayerPortrait();
     renderAgents();
     renderProjects();
     renderSelected();
     renderRequests();
+    configureRuntime();
+    $('#send-message').disabled = !state.connected || state.sending || Boolean(state.busy);
   })();
   try { await refreshing; } finally { refreshing = null; }
 }
@@ -109,7 +133,7 @@ function renderAgents() {
     const info = element('span');
     info.append(element('span', 'name', agent.name), element('span', 'role', agent.role));
     const status = element('span', 'state');
-    status.append(element('b', null, 'Demo'));
+    status.append(element('b', null, state.mode === 'real' ? agent.status === 'running' ? 'Pensando' : 'Hermes' : 'Demo'));
     button.append(avatar, info, status);
     button.addEventListener('click', () => selectAgent(agent.id));
     return button;
@@ -120,18 +144,22 @@ function conversation() {
   const key = conversationKey();
   if (!state.chats.has(key)) {
     const agent = state.agents.find(a => a.id === state.selected);
-    state.chats.set(key, [{ who: 'agent', message: `Hola, soy ${agent?.name || 'parte del equipo'}. ${agent?.description || 'Te ayudo a explorar este rol.'}\n\nEsta es una conversación de demostración. Cuéntame qué misión tienes en mente.` }]);
+    state.chats.set(key, state.mode === 'real' ? [] : [{ who: 'agent', message: `Hola, soy ${agent?.name || 'parte del equipo'}. ${agent?.description || 'Te ayudo a explorar este rol.'}\n\nEsta es una conversación de demostración. Cuéntame qué misión tienes en mente.` }]);
   }
   return state.chats.get(key);
 }
 function renderChat() {
   const thread = $('#chat-thread');
-  thread.replaceChildren(...conversation().map(item => {
+  const entries = [...conversation()];
+  if (state.live?.agentId === state.selected && state.project === 'studio' && state.live.text) entries.push({ who: 'agent', message: state.live.text, streaming: true });
+  thread.replaceChildren(...entries.map(item => {
     const message = element('div', `chat-message${item.who === 'user' ? ' user' : ''}`);
     const name = state.agents.find(agent => agent.id === state.selected)?.name;
-    message.append(element('small', null, item.who === 'user' ? 'TÚ' : `${name?.toUpperCase()} · DEMO`), document.createTextNode(item.message));
+    const caption = item.who === 'user' ? 'TÚ' : item.who === 'system' ? 'ESTUDIO' : `${name?.toUpperCase()} · ${state.mode === 'real' ? item.streaming ? 'RESPONDIENDO…' : 'HERMES' : 'DEMO'}`;
+    message.append(element('small', null, caption), document.createTextNode(item.message));
     return message;
   }));
+  if (!entries.length) thread.append(element('p', 'empty-state', 'Escríbele para iniciar una conversación real con su perfil de Hermes.'));
   thread.scrollTop = thread.scrollHeight;
 }
 function renderSelected() {
@@ -139,12 +167,15 @@ function renderSelected() {
   if (!agent) return;
   $('#selected-name').textContent = agent.name;
   $('#selected-role').textContent = agent.role.toUpperCase();
-  $('#selected-status').textContent = `${label(agent.status)} · personaje demo`;
+  $('#selected-status').textContent = `${label(agent.status)} · ${state.mode === 'real' ? 'Hermes' : 'personaje demo'}`;
   $('#selected-portrait').replaceChildren(portrait(agent, true));
   $('#selected-portrait').style.borderColor = agentColor(agent) + '77';
   $('#selected-portrait').style.background = agentColor(agent) + '18';
   $('#profile-description').textContent = agent.description;
   $('#profile-archetype').textContent = archetypes[agent.id] || agent.role;
+  $('#profile-runtime').textContent = state.mode === 'real' ? 'Autenticado · perfil propio' : 'Desconectado';
+  $('#profile-model').textContent = agent.model || 'Sin configurar';
+  $('#profile-tools').textContent = state.mode === 'real' ? 'Memoria y planificación' : 'Mensajes fijos y tareas en memoria';
   $('#message').placeholder = `Comparte una idea con ${agent.name}…`;
   renderChat();
   renderTasks();
@@ -251,7 +282,14 @@ function addEvent(event) {
   const descriptions = { 'studio.connected': 'El canal de eventos demo está conectado.', 'task.created': `Nueva misión demo para ${agent?.name || 'el equipo'}.`, 'task.updated': `Se actualizó una misión de ${agent?.name || 'el equipo'}.`, 'task.status_changed': `Una misión de ${agent?.name || 'el equipo'} avanzó de estado.`, 'message.created': `Mensaje demo enviado a ${agent?.name || 'un agente'}.`, 'message.received': `${agent?.name || 'Un agente'} respondió en la simulación.`, 'agent.message': `${agent?.name || 'Un agente'} respondió en la simulación.`, 'message.replied': `${agent?.name || 'Un agente'} respondió en la simulación.`, 'runtime.ready': 'La oficina de demostración está lista.' };
   if (type === 'request.created') descriptions[type] = 'Nuevo cambio de UX demo. Nodo conserva la petición y sus dependencias.';
   if (type === 'request.updated') descriptions[type] = 'El cambio de UX avanzó un traspaso simulado.';
-  const message = descriptions[type] || `${agent?.name ? `${agent.name} · ` : ''}${type.replaceAll('.', ' / ').replaceAll('_', ' ')} · demo`;
+  if (state.mode === 'real') {
+    descriptions['run.started'] = `${agent?.name || 'Hermes'} está respondiendo con ${event.data?.model || 'su modelo'}.`;
+    descriptions['run.completed'] = `${agent?.name || 'Hermes'} respondió · ${event.data?.tokens?.total || 0} tokens.`;
+    descriptions['run.failed'] = `La conversación con ${agent?.name || 'Hermes'} encontró un error.`;
+    descriptions['agent.status'] = event.data?.tool ? `${agent?.name || 'Hermes'} · ${event.data.tool}` : `${agent?.name || 'Hermes'} disponible.`;
+    descriptions['runtime.ready'] = 'Oficina conectada a Hermes · suscripción ChatGPT.';
+  }
+  const message = descriptions[type] || `${agent?.name ? `${agent.name} · ` : ''}${type.replaceAll('.', ' / ').replaceAll('_', ' ')}`;
   state.events.unshift({ message, timestamp: event.timestamp || new Date().toISOString() });
   state.events = state.events.slice(0, 4);
   renderEvents();
@@ -323,15 +361,22 @@ function renderRequests() {
 function connectEvents() {
   eventStream = new EventSource('/api/events');
   eventStream.onopen = () => {
-    setConnection(true, 'Estudio conectado · simulación');
+    setConnection(true, state.mode === 'real' ? 'Hermes conectado · conversaciones reales' : 'Estudio conectado · simulación');
     refresh().catch(() => setStatus('No se pudo actualizar el estado del estudio al reconectar.'));
   };
-  eventStream.onerror = () => setConnection(false, 'Reconectando eventos demo…');
+  eventStream.onerror = () => setConnection(false, 'Reconectando con el estudio…');
   const handle = (message) => {
     try {
       const event = JSON.parse(message.data);
+      if (event.type === 'message.delta') {
+        if (state.live?.runId !== event.runId) state.live = { runId: event.runId, agentId: event.agentId, text: '' };
+        state.live.text += event.data.text || '';
+        renderChat();
+        return;
+      }
+      if (event.type === 'run.completed' || event.type === 'run.failed') state.live = null;
       addEvent(event);
-      if (event.type?.startsWith('task.') || event.type?.startsWith('request.')) refresh().catch(() => setStatus('No se pudieron actualizar las misiones y solicitudes.'));
+      if (event.type?.startsWith('task.') || event.type?.startsWith('request.') || event.type?.startsWith('run.') || event.type === 'agent.status') refresh().catch(() => setStatus('No se pudo actualizar el estado.'));
     } catch { setStatus('Se recibió un evento que no se pudo interpretar.'); }
   };
   eventStream.onmessage = handle;
@@ -380,7 +425,7 @@ $('#chat-form').addEventListener('submit', async event => {
   event.preventDefault();
   const input = $('#message');
   const message = input.value.trim();
-  if (!message || !state.selected) return;
+  if (!message || !state.selected || state.sending || state.busy) return;
   const agentId = state.selected;
   const projectId = state.project;
   const history = conversation();
@@ -388,14 +433,21 @@ $('#chat-form').addEventListener('submit', async event => {
   input.value = '';
   renderChat();
   $('#send-message').disabled = true;
-  setStatus('Preparando respuesta demo…');
+  state.sending = true;
+  setStatus(state.mode === 'real' ? 'Hermes está preparando su respuesta…' : 'Preparando respuesta demo…');
   try {
-    const response = await api('/api/messages', { agentId, projectId, message });
-    history.push({ who: 'agent', message: typeof response.reply === 'string' ? response.reply : response.reply?.message || response.reply?.text || 'Respuesta de demostración recibida.' });
+    const response = await api('/api/messages', { agentId, projectId, message, clientMessageId: crypto.randomUUID() });
+    state.live = null;
+    if (state.mode === 'real') await refresh();
+    else history.push({ who: 'agent', message: typeof response.reply === 'string' ? response.reply : response.reply?.message || response.reply?.text || 'Respuesta de demostración recibida.' });
     if (agentId === state.selected && projectId === state.project) renderChat();
-    setStatus('Respuesta fija de demostración. No se consultó un modelo.');
-  } catch (error) { setStatus(`Mensaje sin respuesta: ${error.message}`); }
-  finally { $('#send-message').disabled = !state.connected; }
+    setStatus(state.mode === 'real' ? `${response.model} · respuesta real de Hermes · ${response.tokens?.total || 0} tokens` : 'Respuesta fija de demostración. No se consultó un modelo.');
+  } catch (error) {
+    state.live = null;
+    if (state.mode === 'real') await refresh().catch(() => {});
+    setStatus(`Mensaje sin respuesta: ${error.message}`);
+  }
+  finally { state.sending = false; $('#send-message').disabled = !state.connected || Boolean(state.busy); }
 });
 $('#message').addEventListener('keydown', event => {
   if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); if (!$('#send-message').disabled) $('#chat-form').requestSubmit(); }
@@ -486,7 +538,7 @@ function draw(now) {
 function interact() {
   if (!nearest) { setStatus('Acércate a una mesa rotulada o selecciona su agente en la lista del equipo.'); return; }
   selectAgent(nearest.id); switchTab('chat');
-  setStatus(`Mesa de ${nearest.name} · ${nearest.role}. Puedes escribirle o pulsar «Probar voz · DEMO», sin audio real.`);
+  setStatus(`Mesa de ${nearest.name} · ${nearest.role}. ${state.mode === 'real' ? 'Escríbele para conversar con su perfil de Hermes.' : 'Puedes escribirle o probar la voz DEMO.'}`);
   if (window.matchMedia('(max-width:820px)').matches) $('.agent-panel').scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'nearest' });
 }
 const movementKeys = ['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'];
@@ -516,12 +568,12 @@ switchTab('chat');
 animationFrame = requestAnimationFrame(draw);
 try {
   await refresh();
-  setConnection(true, 'Estudio conectado · simulación');
+  setConnection(true, state.mode === 'real' ? 'Hermes conectado · conversaciones reales' : 'Estudio conectado · simulación');
   addEvent({ type: 'runtime.ready' });
   connectEvents();
 } catch (error) {
   setConnection(false, 'Servidor local no disponible');
   $('#agent-list').replaceChildren(element('p', 'loading', 'No se pudo cargar el equipo. Abre esta página desde el servidor local del proyecto.'));
-  setStatus(`No se cargó la demo: ${error.message}`);
+  setStatus(`No se cargó el estudio: ${error.message}`);
 }
 window.addEventListener('pagehide', () => { cancelVoice(); eventStream?.close(); cancelAnimationFrame(animationFrame); });

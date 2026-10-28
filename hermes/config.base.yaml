@@ -6,7 +6,8 @@ _config_version: 51
 auth:
   adopt_external_logins: false
 agent:
-  max_turns: 20
+  max_turns: 4
+  run_budget_seconds: 90
   budget_warning_ratio: 0.75
   api_max_retries: 1
   auto_recovery_cycles: 0

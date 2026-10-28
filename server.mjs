@@ -3,12 +3,14 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { makeDemo, InputError } from './lib/demo.mjs';
+import { makeHermes } from './lib/hermes.mjs';
 
 const root = path.dirname(fileURLToPath(import.meta.url));
 const publicRoot = path.join(root, 'public');
 const types = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.json': 'application/json; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png' };
-export function createStudioServer({ port = 4317 } = {}) {
-  const demo = makeDemo();
+export function createStudioServer({ port = 4317, runtime } = {}) {
+  if (!runtime) throw new Error('Se requiere un runtime explícito. El inicio normal usa Hermes real.');
+  const demo = runtime;
   const streams = new Set();
   const server = http.createServer(async (req, res) => {
     const host = req.headers.host;
@@ -23,10 +25,10 @@ export function createStudioServer({ port = 4317 } = {}) {
     function json(status, data) { res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' }); res.end(JSON.stringify(data)); }
     try {
       const url = new URL(req.url, `http://${host}`);
-      if (req.method === 'GET' && url.pathname === '/api/health') return json(200, { ok: true, mode: 'demo', version: '0.1.0' });
+      if (req.method === 'GET' && url.pathname === '/api/health') return json(200, { ok: true, mode: demo.snapshot().mode, version: '0.2.0' });
       if (req.method === 'GET' && url.pathname === '/api/studio') return json(200, demo.snapshot());
       if (req.method === 'GET' && url.pathname === '/api/events') {
-        if (streams.size >= 20) return json(503, { error: 'Demasiadas conexiones demo.' });
+        if (streams.size >= 20) return json(503, { error: 'Demasiadas conexiones al estudio.' });
         res.writeHead(200, { 'Content-Type': 'text/event-stream; charset=utf-8', Connection: 'keep-alive', 'X-Accel-Buffering': 'no' });
         res.write('retry: 2000\n\n');
         const send = event => res.write(`id: ${event.id}\ndata: ${JSON.stringify(event)}\n\n`);
@@ -47,8 +49,9 @@ export function createStudioServer({ port = 4317 } = {}) {
         }
         let input;
         try { input = JSON.parse(body); } catch { throw new InputError('JSON inválido.'); }
+        if (url.pathname === '/api/messages') return json(200, await demo.message(input));
+        if (demo.snapshot().mode === 'real') throw new InputError('Esta operación aún no está conectada a Hermes.', 409);
         if (url.pathname === '/api/tasks') return json(201, { task: demo.createTask(input), mode: 'demo' });
-        if (url.pathname === '/api/messages') return json(200, demo.message(input));
         if (url.pathname === '/api/requests') return json(201, demo.createRequest(input));
         const handoff = url.pathname.match(/^\/api\/requests\/([a-zA-Z0-9-]+)\/advance$/);
         if (handoff) return json(200, demo.advanceRequest(handoff[1]));
@@ -68,7 +71,7 @@ export function createStudioServer({ port = 4317 } = {}) {
       res.end(req.method === 'HEAD' ? undefined : bytes);
     } catch (error) {
       const status = error instanceof InputError ? error.status : error.code === 'ENOENT' || error.code === 'EISDIR' ? 404 : error instanceof URIError ? 400 : 500;
-      json(status, { error: status === 500 ? 'Error interno de la demo.' : error.message });
+      json(status, { error: status === 500 ? 'Error interno del estudio.' : error.message });
     }
   });
   server.requestTimeout = 15000;
@@ -79,8 +82,11 @@ export function createStudioServer({ port = 4317 } = {}) {
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const port = Number(process.env.STUDIO_PORT || 4317);
   if (!Number.isInteger(port) || port < 1024 || port > 65535) throw new Error('STUDIO_PORT debe estar entre 1024 y 65535.');
-  const { server, closeStreams } = createStudioServer({ port });
-  server.listen(port, '127.0.0.1', () => console.log(`Hermes Game Studio DEMO · http://127.0.0.1:${port}\nSin modelos, sin herramientas, datos sólo en memoria.`));
+  const mode = process.env.STUDIO_MODE || 'real';
+  if (!['real','demo'].includes(mode)) throw new Error('STUDIO_MODE debe ser real o demo.');
+  const runtime = mode === 'real' ? await makeHermes({ root }) : makeDemo();
+  const { server, closeStreams } = createStudioServer({ port, runtime });
+  server.listen(port, '127.0.0.1', () => console.log(`Hermes Game Studio ${mode.toUpperCase()} · http://127.0.0.1:${port}\n${runtime.snapshot().notice}`));
   function stop() { closeStreams(); server.close(); }
   process.on('SIGINT', stop);
   process.on('SIGTERM', stop);

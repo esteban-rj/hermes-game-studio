@@ -1,4 +1,23 @@
-# Verificación de la base v0.1
+# Verificación del estudio
+
+## v0.2 · conversaciones reales · 28 de octubre de 2026
+
+- Inicio normal en modo real con Hermes v0.22.5 y OAuth de la suscripción.
+- Nodo respondió mediante el CLI con `gpt-6-luna`.
+- Atlas respondió desde la oficina web con `gpt-6.1-sol`; un segundo turno
+  recordó el mensaje anterior usando la misma sesión nativa.
+- Prisma respondió desde la oficina web con `gpt-6.1-terra` y su identidad visual.
+- La UI mostró estado, respuesta y tokens reportados por Hermes. Las misiones y
+  la voz simuladas no están disponibles en modo real.
+- Tests sin inferencia: 12/12 PASS; sintaxis/JSON: 21 archivos PASS. Incluyen
+  HTTP real con fixture, sesiones, persistencia, deduplicación, concurrencia,
+  error sin sustitución y rechazo de operaciones simuladas.
+- Historial y credenciales permanecen en rutas privadas ignoradas.
+- Alcance: conversación, memoria y planificación. Sin terminal, Git, despacho
+  de tareas de juegos ni voz desde la oficina. Una desconexión del CLI no
+  acredita cancelación nativa; presupuesto de 90 s, sin reintento del backend.
+
+Lo siguiente conserva el registro histórico de las entregas anteriores.
 
 ## Instalación Hermes y preparación Git local · 28 de octubre de 2026
 

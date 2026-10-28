@@ -56,7 +56,7 @@ $studioSoulSource = Join-Path $studioRoot "hermes\profiles\$Agent\SOUL.md"
 $studioConfigSource = Join-Path $studioRoot 'hermes\config.base.yaml'
 if (-not (Test-Path -LiteralPath $studioSoulSource)) { throw 'Falta SOUL.md fuente.' }
 $studioConfig = Get-Content -LiteralPath $studioConfigSource -Raw -Encoding utf8
-$studioConfig = $studioConfig.Replace('  max_turns: 20',("  max_turns: 20`n  reasoning_effort: " + $studioSelection.reasoningEffort + "`n  service_tier: normal"))
+$studioConfig = $studioConfig.Replace('  max_turns: 4',("  max_turns: 4`n  reasoning_effort: " + $studioSelection.reasoningEffort + "`n  service_tier: normal"))
 if ($LocalGit) { $studioConfig = $studioConfig.Replace('cli: [todo, memory]','cli: [terminal, file, todo, memory]') }
 $studioConfig += "`nmodel:`n  provider: " + (ConvertTo-Json -InputObject $Provider -Compress) + "`n  default: " + (ConvertTo-Json -InputObject $Model -Compress)
 $studioConfig += "`n  openai_runtime: auto`nfallback_providers: []`n"

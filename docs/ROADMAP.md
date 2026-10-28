@@ -1,5 +1,17 @@
 # Plan y criterios de aceptación
 
+## Entregado en v0.2: conversación real
+
+Seis perfiles nativos autenticados por suscripción. La oficina envía mensajes a
+Hermes mediante el CLI JSONL, reanuda una sesión por agente y guarda el historial
+local. Se comprobaron respuestas reales de Luna, Terra y Sol 6.1, y continuidad
+de Atlas en el navegador. Un turno concurrente, cuatro iteraciones y presupuesto
+nativo de 90 s; sin fallback a API. No hay despacho de tareas de juegos ni voz.
+La cancelación nativa verificada sigue pendiente; desconectar el CLI puede dejar
+el turno ejecutándose hasta su presupuesto. Ver [VERIFICATION.md](VERIFICATION.md).
+
+Las fases siguientes distinguen la base histórica y el trabajo pendiente.
+
 ## Fase 0: base revisable de esta entrega
 
 Oficina con seis mesas/agentes, movimiento por proximidad, estados de voz demo, tareas demo y respuestas fijas claramente señaladas. Cadena UX → planeación → implementación → QA → validación UX conserva una sola solicitud. Servidor local, contrato HTTP/SSE y perfiles Hermes versionables. Pruebas locales sin inferencia. Repositorio nuevo separado de los juegos.
@@ -8,7 +20,7 @@ Aceptación: se puede abrir sin paquetes externos, seleccionar cualquier agente,
 
 ## Fase 1: un agente real, lectura solamente
 
-Hermes v0.22.5 ya se instaló en Windows nativo, fijado en `bf0203a794a07aac3ff764972ab9087baa4e4f4e`, y hay seis perfiles nativos del estudio. Completar autenticación y comprobar acceso y límites de la suscripción ChatGPT/Codex con Sol 6.1 como máximo según [SUBSCRIPTION.md](SUBSCRIPTION.md). Separar memoria por proyecto/agente y compartir OAuth mediante el mecanismo nativo de la raíz, sin copiar tokens. Implementar el adaptador y una tarea de lectura sobre un único proyecto.
+Hermes v0.22.5 está instalado, autenticado y conectado a la oficina con Sol 6.1 como máximo según [SUBSCRIPTION.md](SUBSCRIPTION.md). Queda ejecutar una tarea de lectura sobre un único proyecto, aislar permisos de archivos y verificar cancelación. La memoria por proyecto/agente y el OAuth compartido nativo se mantienen sin copiar tokens.
 
 Aceptación: run con ID, proyecto y perfil, estado real, resultado con referencias verificables, uso observado, timeout y cancelación probados. Sin autenticación de suscripción y límites configurados, el run se rechaza. Al agotar cuota, detenerse sin fallback a API. La demo continúa disponible y distinguible. Comparar los modelos autorizados con 3–5 tareas representativas.
 
@@ -32,4 +44,4 @@ Aceptación: micrófono sólo con acción del usuario, claves sólo backend, int
 
 ## Decisiones pendientes
 
-Acceso y límites reales de la suscripción; versión/instalación de Hermes; primer juego piloto y tarea; aplicaciones/herramientas que el puente puede abrir; política de aprobación para commits/push de los juegos; dirección visual final; STT/TTS o Realtime. Ninguna impide revisar la demo actual.
+Cuotas disponibles durante el uso; primer juego piloto y tarea; aplicaciones/herramientas que el puente puede abrir; política de aprobación para commits/push de los juegos; dirección visual final; STT/TTS o Realtime.

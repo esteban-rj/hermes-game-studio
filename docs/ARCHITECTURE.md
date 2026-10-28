@@ -6,8 +6,7 @@
 flowchart LR
   U[Usuario: teclado / voz futura] --> UI[Oficina web local]
   UI --> API[Backend del estudio: tareas / eventos / permisos]
-  API --> DEMO[Adaptador DEMO implementado]
-  API -. pendiente .-> H[Hermes: perfiles / memoria / herramientas]
+  API --> H[Hermes: CLI JSONL / perfiles / memoria]
   H -. herramienta de código futura .-> C[Codex App Server]
   H -. operaciones autorizadas futuras .-> W[Puente Windows: el motor del proyecto / apps]
   H -. builds aislados opcionales .-> D[Docker por proyecto]
@@ -15,7 +14,7 @@ flowchart LR
 
 La oficina representa agentes y runs; no ejecuta el modelo. Hermes conserva identidad, memoria y herramientas del agente. El backend normaliza eventos y controla qué proyecto, worktree y permisos corresponden a una ejecución. Codex se integra como herramienta programática especializada, sin reemplazar Hermes.
 
-En v0.1 las líneas punteadas no están implementadas. No hay scheduler real, cola durable, autenticación multiusuario ni control de procesos de agentes. La API sólo produce eventos demo. Para tareas durables se evaluará Kanban nativo de Hermes, con un tablero por juego, antes de construir un planificador propio.
+En v0.2 la conversación usa Hermes real mediante el CLI JSONL oficial y eventos SSE del estudio. Las líneas punteadas siguen pendientes. No hay despacho de tareas de juegos, autenticación multiusuario ni control de escritorio. Para tareas durables se evaluará Kanban nativo antes de construir un planificador propio.
 
 ## Entorno inicial
 
@@ -46,10 +45,25 @@ Una lista en un JSON o una personalidad no restringe físicamente el acceso. Ant
 4. Limitar tiempo, coste, concurrencia, profundidad y reintentos. Presupuesto sin configurar impide runs de pago.
 5. Propagar cancelar/timeout a Hermes y herramientas, liberar locks y registrar resultados parciales. No reintentar una acción con efectos externos sin clave idempotente.
 
-Los endpoints demo no ejecutan shell ni leen los juegos. El servidor escucha sólo loopback y rechaza Host/Origin ajenos. Esto permite una demo local; no la convierte en un servicio seguro para publicar. Una versión remota requerirá autenticación, TLS y separación del puente host.
+El endpoint de mensajes inicia únicamente el ejecutable Hermes registrado, con perfil, proveedor y modelo validados, texto por stdin y sin shell. Limita herramientas a memoria y planificación. No expone lectura de juegos ni terminal desde la UI. El servidor escucha sólo loopback y rechaza Host/Origin ajenos. Publicarlo remotamente requeriría autenticación, TLS y una revisión del puente.
 
-## Adaptador Hermes propuesto
+## Adaptador Hermes de conversación
 
-Hermes dispone de superficies oficiales HTTP/SSE y TUI gateway JSON-RPC. Evaluar HTTP/SSE como primer transporte, descubrir las capacidades de la versión instalada y verificar una conversación de sólo lectura con home explícito. No raspar la pantalla TUI ni asumir que las rutas demo sean rutas nativas. Añadir streaming sólo al demostrar eventos fiables; un resumen final no puede simular progreso real. [Integración programática oficial](https://hermes-agent.nousresearch.com/docs/developer-guide/programmatic-integration).
+`lib/hermes.mjs` consume el protocolo oficial `chat --query-file - --oneshot
+--format stream-json`. Sólo acepta frames JSON; los logs humanos no son
+respuestas. El gateway nativo de Hermes ejecuta el loop y conserva la sesión.
+El backend impone un turno concurrente, fija cuatro iteraciones y comprueba
+presupuesto nativo de 90 s, sin fallback de proveedor. El cliente permite 180 s
+para transporte y arranque. Una desconexión del CLI puede dejar el turno
+nativo ejecutándose hasta su presupuesto; no se acredita cancelación ni se
+reintenta automáticamente. La deduplicación no sobrevive un reinicio.
+
+La UI conserva mensajes en `.runtime/hermes-office/`, mientras Hermes mantiene
+sus sesiones y memoria en los perfiles nativos. El ID de sesión se usa para
+reanudar al mismo agente. La configuración o fallos nunca activan la demo como
+fallback. La simulación sólo se usa mediante una selección explícita para
+regresión.
+
+El CLI JSONL usa internamente el gateway de la versión instalada. Las superficies oficiales HTTP/SSE y JSON-RPC quedan como alternativas futuras. No se raspa la pantalla TUI ni se interpretan logs como respuestas. [Integración programática oficial](https://hermes-agent.nousresearch.com/docs/developer-guide/programmatic-integration).
 
 Contrato interno deseado (propio, todavía no implementado): `start(task, profile, scope) → runId`, `subscribe(runId) → eventos`, `cancel(runId) → resultado`, `capabilities() → estado comprobado`. La UI seguirá consultando la API del estudio. Los esquemas no pretenden definir la API nativa de Hermes.

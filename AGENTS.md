@@ -3,7 +3,7 @@
 Este repositorio contiene el estudio, sus contratos y perfiles Hermes. Los juegos viven en repositorios independientes.
 
 - Lee README.md y docs/ARCHITECTURE.md antes de cambiar el runtime.
-- La v0.1 es una demo sin inferencia. Conserva las etiquetas DEMO y no declares trabajo real desde eventos simulados.
+- La v0.2 usa Hermes real por defecto. Los tests inyectan fixtures explícitos. No sustituyas errores del runtime por respuestas simuladas. Conserva etiquetas DEMO sólo en el modo de regresión explícito.
 - No conectes modelos, servicios de pago o control de escritorio durante pruebas ordinarias.
 - Secretos, foto del usuario, conversaciones, memorias y homes Hermes van en rutas ignoradas.
 - Cada tarea real tendrá projectId, worktree permitido, presupuesto, límites y evidencia. Un SOUL.md es una instrucción, no una barrera de seguridad.

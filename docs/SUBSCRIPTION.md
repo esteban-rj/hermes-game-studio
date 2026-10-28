@@ -3,7 +3,7 @@
 Decisión del usuario, 28 de octubre de 2026: usar su suscripción y limitar el
 modelo máximo a **GPT-6.1 Sol**. La fuente es `config/model-routing.json`, una
 política propia del estudio. `model-routing.example.json` continúa como ejemplo
-genérico. La oficina continúa en DEMO y los perfiles aún no están conectados.
+genérico. La oficina v0.2 usa conversaciones reales mediante los perfiles nativos.
 
 | Agente | Modelo inicial | Razonamiento |
 | --- | --- | --- |
@@ -73,3 +73,12 @@ key se factura por separado y no forma parte de esta selección.
 [Autenticación oficial](https://learn.chatgpt.com/docs/auth).
 No habilitar generación de imágenes, voz ni proveedores de herramientas con
 facturación adicional suponiendo que estén incluidos en el plan.
+
+## Oficina real v0.2
+
+lib/hermes.mjs aplica la política antes de cada turno, fija proveedor OAuth,
+modelo y razonamiento en el CLI, y comprueba las rutas auxiliares de los perfiles.
+Rechaza configuraciones sin fallback vacío o sin límite nativo de 90 segundos.
+El envío es serial y no hereda claves API ni overrides de modelo de la terminal.
+Un fallo del runtime se muestra como error, sin sustitución simulada. Esta
+política no restringe otras ejecuciones manuales fuera del estudio.

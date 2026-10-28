@@ -55,7 +55,7 @@ test('UX conserva una petición y sus criterios a través de cinco traspasos dep
   assert.equal(demo.events.at(-1).agentId, 'nodo');
 });
 test('HTTP: UI, seguridad local, errores, tareas y eventos SSE', async () => {
-  const { server, closeStreams } = createStudioServer({ port: 0 });
+  const { server, closeStreams } = createStudioServer({ port: 0, runtime: makeDemo() });
   server.listen(0, '127.0.0.1');
   await once(server, 'listening');
   const port = server.address().port;
