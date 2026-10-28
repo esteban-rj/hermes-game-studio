@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "note": "Política del estudio; NO esquema Hermes. Sin modelos, claves ni proveedores elegidos. Las categorías expresan intención, no garantizan acceso.",
+  "routes": {
+    "atlas": { "intent": "reasoning-strong", "provider": null, "model": null },
+    "pixel": { "intent": "code-economical", "provider": null, "model": null },
+    "prisma": { "intent": "visual-capable", "provider": null, "model": null },
+    "ux": { "intent": "experience-design", "provider": null, "model": null },
+    "nodo": { "intent": "coordination-economical", "provider": null, "model": null },
+    "lupa": { "intent": "verification-independent", "provider": null, "model": null }
+  },
+  "limits": { "maxConcurrentPaidRuns": 1, "maxDelegationDepth": 1, "maxRetriesPerTask": 1, "sessionBudgetUsd": null, "requireConfiguredBudgetBeforePaidRuns": true }
+}

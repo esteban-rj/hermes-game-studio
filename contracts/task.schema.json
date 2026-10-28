@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/hermes-game-studio/task-v1",
+  "title": "Tarea del estudio v1 (no API nativa de Hermes)",
+  "type": "object",
+  "required": ["id", "title", "agentId", "projectId", "status", "summary"],
+  "properties": {
+    "id": { "type": "string", "minLength": 1 },
+    "title": { "type": "string", "minLength": 1, "maxLength": 160 },
+    "agentId": { "enum": ["atlas", "pixel", "prisma", "ux", "nodo", "lupa"] },
+    "projectId": { "enum": ["studio", "juego-a", "juego-b"] },
+    "status": { "enum": ["proposed", "assigned", "running", "review", "done", "blocked", "cancelled"] },
+    "summary": { "type": "string" },
+    "acceptanceCriteria": { "type": "array", "items": { "type": "string" } },
+    "allowedWorktree": { "type": "string" },
+    "evidence": { "type": "array", "items": { "type": "string" } },
+    "budgetUsd": { "type": "number", "minimum": 0 },
+    "parentTaskId": { "type": ["string", "null"] },
+    "requestId": { "type": "string" },
+    "dependsOn": { "type": "array", "items": { "type": "string" } },
+    "stage": { "enum": ["ux.brief", "plan", "implement", "qa", "ux.validate"] }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,13 @@
+{
+  "name": "hermes-game-studio",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Oficina local y contratos para un estudio de videojuegos con Hermes Agent; runtime demo explícito.",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "node --test",
+    "check": "node scripts/check.mjs"
+  }
+}

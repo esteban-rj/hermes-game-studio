@@ -1,0 +1,30 @@
+# Secretos, proveedores y configuración del equipo
+.env
+.env.*
+!.env.example
+*.local.json
+*.local.yaml
+*.local.yml
+*.pem
+*.key
+credentials*
+auth.json
+# Memoria, sesiones, conversaciones y fotos privadas
+.runtime/
+.hermes/
+runtime/
+private/
+memories/
+sessions/
+logs/
+*.sqlite*
+*.db
+# Dependencias, builds y QA local
+node_modules/
+dist/
+coverage/
+.test-output/
+*.log
+*.zip
+.DS_Store
+Thumbs.db

@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/hermes-game-studio/event-v1",
+  "title": "Evento del estudio v1 (no evento nativo de Hermes)",
+  "type": "object",
+  "required": ["schemaVersion", "id", "timestamp", "type", "mode", "data"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "id": { "type": "string" },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "type": { "enum": ["task.created", "task.updated", "request.created", "request.updated", "message.received", "agent.status", "run.started", "run.completed", "run.failed", "approval.required", "artifact.created"] },
+    "mode": { "enum": ["demo", "real"] },
+    "agentId": { "enum": ["atlas", "pixel", "prisma", "ux", "nodo", "lupa"] },
+    "projectId": { "enum": ["studio", "juego-a", "juego-b"] },
+    "taskId": { "type": "string" },
+    "runId": { "type": "string" },
+    "data": { "type": "object" }
+  },
+  "additionalProperties": false
+}

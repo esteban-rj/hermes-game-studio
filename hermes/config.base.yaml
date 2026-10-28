@@ -1,0 +1,35 @@
+# Plantilla parcial de configuración NATIVA de Hermes; no es el manifiesto del estudio.
+# Fuente: cli-config.yaml.example (main), revisada el 2026-10-27.
+# prepare-hermes.ps1 añade model.provider/default y terminal.cwd explícitos.
+# No arrancar hasta revisar proveedor, modelo, credenciales y coste.
+agent:
+  max_turns: 20
+  budget_warning_ratio: 0.75
+  api_max_retries: 1
+  auto_recovery_cycles: 0
+# Límites contrastados con la sección delegation del ejemplo oficial.
+# El toolset de delegación continúa sin habilitarse.
+delegation:
+  max_iterations: 20
+  max_concurrent_children: 2
+  max_spawn_depth: 1
+  orchestrator_enabled: false
+  subagent_auto_approve: false
+  inherit_mcp_toolsets: false
+# No iniciar workers automáticamente al arrancar un gateway de prueba.
+kanban:
+  dispatch_in_gateway: false
+memory:
+  memory_enabled: true
+  user_profile_enabled: true
+  memory_char_limit: 2200
+  user_char_limit: 1375
+  nudge_interval: 0
+compression:
+  enabled: true
+  threshold: 0.75
+  protect_last_n: 8
+# Arranque conservador: conversación y memoria. Añadir herramientas sólo tras
+# validar el puente de permisos por proyecto. Esta lista no es un sandbox.
+platform_toolsets:
+  cli: [todo, memory]

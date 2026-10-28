@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#11191b">
+  <meta name="description" content="Prototipo local del estudio multiagente con Hermes: una oficina pixel art para explorar roles, conversaciones y tareas simuladas.">
+  <title>Hermes — Game Studio</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/app.js" type="module"></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="Hermes Game Studio, inicio"><span class="brand-mark" aria-hidden="true">H<span>✦</span></span><span>HERMES<small>GAME STUDIO</small></span></a>
+    <div class="location"><span class="location-dot"></span>Planta 01 <span>/</span> El estudio</div>
+    <div class="demo-badge"><span></span> DEMO LOCAL</div>
+  </header>
+
+  <main>
+    <section class="studio-column" aria-labelledby="studio-title">
+      <div class="page-heading"><div><p class="eyebrow">TU PRÓXIMO JUEGO EMPIEZA AQUÍ</p><h1 id="studio-title">Un equipo. Un mundo de ideas.</h1><p class="intro">Cada agente tiene su mesa. Acércate para conversar y probar el flujo de voz demo.</p></div><span class="version">PROTOTIPO<br><b>0.1</b></span></div>
+
+      <section class="office-card" aria-label="Oficina interactiva">
+        <div class="office-toolbar"><div><span class="status-light" id="connection-light"></span><span id="connection-label">Conectando al estudio…</span></div><span>HERMES HQ <span class="tiny-star">✦</span></span></div>
+        <div class="canvas-wrap">
+          <canvas id="office" width="832" height="512" tabindex="0" aria-label="Oficina pixel art con seis mesas individuales rotuladas. Muévete con WASD o flechas y pulsa E cerca de una mesa para conversar con su agente y probar voz demo sin audio real. También puedes seleccionar un agente en la lista del equipo.">Usa los botones de la lista del equipo para interactuar con los agentes.</canvas>
+          <div class="scene-label"><span class="pixel-dot"></span> OFICINA CREATIVA</div>
+          <div class="interaction-hint" id="interaction-hint" hidden><kbd>E</kbd> Mesa de <strong id="nearby-name"></strong></div>
+        </div>
+        <div class="office-footer"><span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> o flechas <span class="control-separator">·</span> <kbd>E</kbd> abrir mesa</span><button type="button" id="reset-position">↺ Volver a la entrada</button></div>
+        <div class="touch-controls" aria-label="Controles de movimiento táctiles"><button type="button" data-direction="up" aria-label="Mover arriba">↑</button><div><button type="button" data-direction="left" aria-label="Mover izquierda">←</button><button type="button" id="touch-interact">E · Hablar</button><button type="button" data-direction="right" aria-label="Mover derecha">→</button></div><button type="button" data-direction="down" aria-label="Mover abajo">↓</button></div>
+      </section>
+
+      <div class="below-office"><div class="avatar-note"><span class="avatar-mini" aria-hidden="true"></span><div><b>Este eres tú, por ahora.</b><p>Avatar provisional. Tu personaje se diseñará con tu foto.</p></div></div><div class="world-meta"><span>06</span> PERSONAJES <span class="divider">/</span> <span>01</span> ESTUDIO</div></div>
+
+      <section class="ux-card" aria-labelledby="ux-title"><div class="section-title"><h2 id="ux-title">Cambio de UX</h2><span>CADENA DEMO</span></div><p class="ux-intro">Una petición, cinco traspasos. Vera define la experiencia; Nodo conserva el hilo y las dependencias hasta la validación final.</p><form id="request-form"><label for="request-description">¿Qué quieres mejorar en <strong id="request-project">este proyecto</strong>?</label><textarea id="request-description" rows="2" maxlength="2000" placeholder="Ej. Simplificar el inventario para encontrar y equipar objetos sin perder el contexto." required></textarea><div class="request-form-footer"><span>Texto y criterios compartidos en toda la cadena · sin ejecución real</span><button type="submit">Crear petición · DEMO ↗</button></div></form><p class="request-status" id="request-status" role="status"></p><div id="request-list" class="request-list"><p class="empty-state">Todavía no hay cambios de UX en este proyecto.</p></div></section>
+
+      <section class="activity-card" aria-labelledby="activity-title"><div class="section-title"><h2 id="activity-title">Pulso del estudio</h2><span>EVENTOS DEMO</span></div><ol id="event-list" class="event-list"><li><span class="event-dot"></span><span>Preparando la oficina…</span><time>ahora</time></li></ol></section>
+      <p class="simulation-note"><span aria-hidden="true">◇</span> Las conversaciones y tareas de esta demo son simuladas y se reinician al reiniciar el servidor. Hermes, Codex y voz todavía no están conectados.</p>
+    </section>
+
+    <aside class="team-column" aria-label="Equipo y espacio de trabajo">
+      <div class="project-picker"><label for="project">ESPACIO DE TRABAJO</label><div><span aria-hidden="true">▦</span><select id="project" aria-label="Proyecto activo"><option value="studio">El estudio</option></select></div><p>Ejemplos ficticios · contextos separados</p></div>
+      <section class="team-card" aria-labelledby="team-title"><div class="section-title"><h2 id="team-title">Tu equipo</h2><span class="team-count">6 AGENTES</span></div><div id="agent-list" class="agent-list"><p class="loading">Cargando personajes…</p></div></section>
+
+      <section class="agent-panel" aria-labelledby="selected-name">
+        <div class="selected-header"><div class="portrait" id="selected-portrait" aria-hidden="true"></div><div><p id="selected-role" class="eyebrow">CONOCE AL EQUIPO</p><h2 id="selected-name">Selecciona un agente</h2><span id="selected-status" class="selected-status">Personajes de demostración</span></div><span class="panel-spark" aria-hidden="true">✦</span></div>
+        <div class="tabs" role="tablist" aria-label="Información del agente"><button type="button" role="tab" id="tab-chat" aria-selected="true" aria-controls="panel-chat" data-tab="chat">Conversar</button><button type="button" role="tab" id="tab-tasks" aria-selected="false" aria-controls="panel-tasks" data-tab="tasks">Misiones <span id="task-count">0</span></button><button type="button" role="tab" id="tab-profile" aria-selected="false" aria-controls="panel-profile" data-tab="profile">Perfil</button></div>
+        <div class="tab-content" role="tabpanel" id="panel-chat" aria-labelledby="tab-chat">
+          <div class="chat-thread" id="chat-thread" role="log" aria-label="Conversación de demostración" aria-live="polite"></div>
+          <section class="voice-demo-card" aria-labelledby="voice-title"><div class="voice-heading"><span aria-hidden="true">◉</span><h3 id="voice-title">Voz con <span id="voice-agent">el agente</span></h3><span class="voice-state" id="voice-state" role="status" aria-live="polite">Desconectada</span></div><p id="voice-description">Voz real desconectada. La prueba sólo muestra texto; no escucha ni reproduce audio.</p><div class="voice-actions"><button id="voice-demo" type="button">Probar voz · DEMO</button><button id="voice-cancel" type="button" hidden>Cancelar prueba</button></div><small>SIN MICRÓFONO · SIN AUDIO REAL</small></section>
+          <form id="chat-form"><label class="sr-only" for="message">Mensaje al agente</label><div class="message-input"><textarea id="message" rows="2" maxlength="4000" placeholder="Comparte una idea con el equipo…" required></textarea><button id="send-message" type="submit" aria-label="Enviar mensaje demo">↗</button></div><div class="chat-note"><span>◇ Respuesta simulada</span><span>Voz real: desconectada</span></div></form>
+        </div>
+        <div class="tab-content" role="tabpanel" id="panel-tasks" aria-labelledby="tab-tasks" hidden><div class="tasks-intro"><p>Una idea se convierte en una misión.</p><span>FLUJO SIMULADO</span></div><div id="task-list" class="task-list"></div><form id="task-form"><label for="task-title">Nueva misión de demo</label><div class="new-task"><input id="task-title" maxlength="160" placeholder="Ej. Diseñar el mapa inicial" required><button type="submit" aria-label="Crear misión demo">+</button></div></form></div>
+        <div class="tab-content profile-content" role="tabpanel" id="panel-profile" aria-labelledby="tab-profile" hidden><p id="profile-description"></p><dl><div><dt>Tipo de personaje</dt><dd id="profile-archetype"></dd></div><div><dt>Runtime Hermes</dt><dd>Pendiente de conexión</dd></div><div><dt>Modelo</dt><dd>Sin configurar</dd></div><div><dt>Herramientas en esta demo</dt><dd>Mensajes fijos y tareas en memoria</dd></div></dl><p class="profile-footnote">La personalidad visual representa el rol propuesto. No indica un agente en ejecución.</p></div>
+        <p class="form-status" id="form-status" role="status"></p>
+      </section>
+    </aside>
+  </main>
+  <footer class="page-footer"><span>HERMES GAME STUDIO <span class="tiny-star">✦</span> HECHO PARA CREAR</span><span>Una base pequeña para una gran aventura.</span></footer>
+</body>
+</html>

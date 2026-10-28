@@ -1,0 +1,88 @@
+import http from 'node:http';
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { makeDemo, InputError } from './lib/demo.mjs';
+
+const root = path.dirname(fileURLToPath(import.meta.url));
+const publicRoot = path.join(root, 'public');
+const types = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.json': 'application/json; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png' };
+export function createStudioServer({ port = 4317 } = {}) {
+  const demo = makeDemo();
+  const streams = new Set();
+  const server = http.createServer(async (req, res) => {
+    const host = req.headers.host;
+    const addressPort = server.address()?.port || port;
+    if (![ `127.0.0.1:${addressPort}`, `localhost:${addressPort}` ].includes(host)) { res.writeHead(403); res.end('Host rechazado'); return; }
+    const origin = req.headers.origin;
+    if (origin && origin !== `http://${host}`) { res.writeHead(403); res.end('Origen rechazado'); return; }
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Referrer-Policy', 'no-referrer');
+    res.setHeader('Cache-Control', 'no-store');
+    res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'");
+    function json(status, data) { res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' }); res.end(JSON.stringify(data)); }
+    try {
+      const url = new URL(req.url, `http://${host}`);
+      if (req.method === 'GET' && url.pathname === '/api/health') return json(200, { ok: true, mode: 'demo', version: '0.1.0' });
+      if (req.method === 'GET' && url.pathname === '/api/studio') return json(200, demo.snapshot());
+      if (req.method === 'GET' && url.pathname === '/api/events') {
+        if (streams.size >= 20) return json(503, { error: 'Demasiadas conexiones demo.' });
+        res.writeHead(200, { 'Content-Type': 'text/event-stream; charset=utf-8', Connection: 'keep-alive', 'X-Accel-Buffering': 'no' });
+        res.write('retry: 2000\n\n');
+        const send = event => res.write(`id: ${event.id}\ndata: ${JSON.stringify(event)}\n\n`);
+        const lastId = Number(req.headers['last-event-id']);
+        if (Number.isSafeInteger(lastId) && lastId > 0) for (const event of demo.events) if (Number(event.id) > lastId) send(event);
+        const heartbeat = setInterval(() => res.write(': heartbeat\n\n'), 15000);
+        demo.listeners.add(send);
+        streams.add(res);
+        req.on('close', () => { clearInterval(heartbeat); demo.listeners.delete(send); streams.delete(res); });
+        return;
+      }
+      if (req.method === 'POST' && url.pathname.startsWith('/api/')) {
+        if (!req.headers['content-type']?.toLowerCase().startsWith('application/json')) throw new InputError('Usa Content-Type application/json.', 415);
+        let body = '';
+        for await (const chunk of req) {
+          body += chunk;
+          if (Buffer.byteLength(body) > 16384) throw new InputError('Cuerpo demasiado grande.', 413);
+        }
+        let input;
+        try { input = JSON.parse(body); } catch { throw new InputError('JSON inválido.'); }
+        if (url.pathname === '/api/tasks') return json(201, { task: demo.createTask(input), mode: 'demo' });
+        if (url.pathname === '/api/messages') return json(200, demo.message(input));
+        if (url.pathname === '/api/requests') return json(201, demo.createRequest(input));
+        const handoff = url.pathname.match(/^\/api\/requests\/([a-zA-Z0-9-]+)\/advance$/);
+        if (handoff) return json(200, demo.advanceRequest(handoff[1]));
+        const advance = url.pathname.match(/^\/api\/tasks\/([a-zA-Z0-9-]+)\/advance$/);
+        if (advance) return json(200, { task: demo.advanceTask(advance[1]), mode: 'demo' });
+        return json(404, { error: 'Ruta API no encontrada.' });
+      }
+      if (url.pathname.startsWith('/api/')) return json(404, { error: 'Ruta API no encontrada.' });
+      if (!['GET', 'HEAD'].includes(req.method)) return json(405, { error: 'Método no permitido.' });
+      const pathname = decodeURIComponent(url.pathname);
+      const relative = pathname === '/' ? 'index.html' : pathname.slice(1);
+      const target = path.resolve(publicRoot, relative);
+      // Restricción de archivos independiente de la normalización de URL, también en Windows.
+      if (path.relative(publicRoot, target).startsWith('..') || path.isAbsolute(path.relative(publicRoot, target)) || relative.includes('\\') || relative.includes(':')) return json(403, { error: 'Ruta rechazada.' });
+      const bytes = await readFile(target);
+      res.writeHead(200, { 'Content-Type': types[path.extname(target)] || 'application/octet-stream' });
+      res.end(req.method === 'HEAD' ? undefined : bytes);
+    } catch (error) {
+      const status = error instanceof InputError ? error.status : error.code === 'ENOENT' || error.code === 'EISDIR' ? 404 : error instanceof URIError ? 400 : 500;
+      json(status, { error: status === 500 ? 'Error interno de la demo.' : error.message });
+    }
+  });
+  server.requestTimeout = 15000;
+  server.headersTimeout = 10000;
+  server.on('close', () => { for (const stream of streams) stream.end(); });
+  return { server, demo, closeStreams: () => { for (const stream of streams) stream.end(); } };
+}
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  const port = Number(process.env.STUDIO_PORT || 4317);
+  if (!Number.isInteger(port) || port < 1024 || port > 65535) throw new Error('STUDIO_PORT debe estar entre 1024 y 65535.');
+  const { server, closeStreams } = createStudioServer({ port });
+  server.listen(port, '127.0.0.1', () => console.log(`Hermes Game Studio DEMO · http://127.0.0.1:${port}\nSin modelos, sin herramientas, datos sólo en memoria.`));
+  function stop() { closeStreams(); server.close(); }
+  process.on('SIGINT', stop);
+  process.on('SIGTERM', stop);
+  server.on('error', error => { console.error(error.message); process.exitCode = 1; });
+}
