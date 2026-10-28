@@ -1,7 +1,10 @@
 # Plantilla parcial de configuración NATIVA de Hermes; no es el manifiesto del estudio.
-# Fuente: cli-config.yaml.example (main), revisada el 2026-10-27.
+# Fuente: Hermes v0.22.5, commit bf0203a794a07aac3ff764972ab9087baa4e4f4e.
 # prepare-hermes.ps1 añade model.provider/default y terminal.cwd explícitos.
 # No arrancar hasta revisar proveedor, modelo, credenciales y coste.
+_config_version: 51
+auth:
+  adopt_external_logins: false
 agent:
   max_turns: 20
   budget_warning_ratio: 0.75

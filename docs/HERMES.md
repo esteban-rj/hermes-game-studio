@@ -1,15 +1,31 @@
-# Integración de Hermes: base preparada, runtime pendiente
+# Integración de Hermes: CLI instalado, conexión de la oficina pendiente
 
 Decisión posterior, 28 de octubre de 2026: **suscripción ChatGPT/Codex y Sol 6.1
 como máximo**. Ver [rutas elegidas y límites](SUBSCRIPTION.md). El preparador ahora
 usa `config/model-routing.json` y rechaza proveedores de API de pago y modelos
-fuera de la lista. Hermes sigue sin instalarse ni conectarse a la oficina.
+fuera de la lista. Hermes está instalado para uso CLI; la oficina sigue sin
+conectarse al runtime.
 
-Revisión: 27 de octubre de 2026. Se consultaron la documentación oficial y los
-archivos de la rama `main` del repositorio de Nous Research. No se obtuvo un SHA
-actual verificable desde este entorno; por eso esta base **no declara una versión
-fijada de Hermes**. Al instalar, registrar versión y commit en el inventario local
-y repetir la comprobación de configuración.
+Revisión: 28 de octubre de 2026. Instalación oficial de Windows en canal estable:
+**Hermes v0.22.5**, commit `bf0203a794a07aac3ff764972ab9087baa4e4f4e`.
+El comando informó Python 3.14.9 y OpenAI SDK 2.24.0. Fuente, dependencias y datos
+están fuera del Git del estudio; `.runtime/hermes-install.local.json` guarda las
+rutas locales. El instalador se ejecutó sin setup interactivo, navegador de
+automatización, control del escritorio ni desktop adicional. No se inició un
+gateway ni inferencia. Una copia nueva del repositorio necesita su instalación
+y registro locales propios.
+
+```powershell
+.\scripts\use-hermes.ps1 -Action Version
+.\scripts\use-hermes.ps1 -Action Login
+```
+
+`Login` abre el flujo oficial de navegador de OpenAI con PKCE. El titular completa
+el login y la autorización en el navegador. El home raíz guarda el OAuth; los
+perfiles nativos del mismo árbol usan la lectura compartida de Hermes, sin
+copiar tokens. La plantilla desactiva la adopción automática del login de otros
+CLIs. No introducir claves ni tokens en el repositorio o en prompts.
+[Proveedor oficial](https://hermes-agent.nousresearch.com/docs/integrations/providers).
 
 ## Qué existe
 
@@ -23,8 +39,10 @@ y repetir la comprobación de configuración.
   exige workspace, toma proveedor/modelo de la política elegida y rechaza
   sobrescrituras y overrides fuera de la lista autorizada.
 
-No existe todavía un proceso Hermes conectado a la oficina. Crear perfiles no
-crea un equipo en ejecución. El adaptador demo no utiliza credenciales ni modelos.
+Hay seis perfiles nativos `studio-<agente>` preparados, sin herramientas de
+terminal. Crear perfiles no crea un equipo en ejecución. No existe todavía un
+proceso Hermes conectado a la oficina. El adaptador demo no utiliza credenciales
+ni modelos.
 
 ## Compatibilidad contrastada
 
@@ -37,7 +55,9 @@ proyecto/agente evita que Atlas de un juego recuerde decisiones del otro.
 El CLI oficial también admite `hermes -p nombre chat` y
 `hermes --profile=nombre doctor` para perfiles registrados. Los homes que prepara
 este repositorio se seleccionan mediante `HERMES_HOME`, sin registrarlos en la
-instalación del usuario. Ningún perfil constituye un sandbox y `terminal.cwd`
+instalación del usuario. Con `-NativeProfile`, el preparador crea en cambio
+`<home-raíz>/profiles/<proyecto>-<agente>`, reconocible con `-p` y compatible con
+el OAuth compartido del home raíz. Ningún perfil constituye un sandbox y `terminal.cwd`
 sólo fija el directorio inicial. Un único proceso escritor debe poseer cada home.
 [Perfiles oficiales](https://hermes-agent.nousresearch.com/docs/user-guide/profiles).
 
@@ -81,8 +101,9 @@ try {
 }
 ```
 
-La primera conversación real requiere credenciales configuradas dentro de ese
-home, presupuesto elegido y herramientas revisadas. `agent.max_turns` limita
+La primera conversación real requiere credenciales resueltas para ese perfil
+(OAuth del home raíz en perfiles nativos), cuota y límites elegidos, y herramientas
+revisadas. `agent.max_turns` limita
 iteraciones, **no es un límite monetario**. Compresión y herramientas auxiliares
 tienen que entrar en el presupuesto del proveedor. El preset inicial sólo ofrece
 `todo` y `memory` al CLI. Herramientas de terminal, edición, visuales y Codex
@@ -95,7 +116,7 @@ Propuesta inicial: servicio del estudio y acceso a aplicaciones en Windows;
 Hermes local en Windows si sus herramientas concretas pasan la prueba de la
 máquina. La documentación actual incluye CLI, TUI, gateway, navegador y MCP
 nativos. WSL2 queda como alternativa para herramientas que dependan de Linux.
-No se instaló ninguna de las dos variantes en esta entrega.
+Se instaló la variante Windows nativa en esta entrega; WSL no se instaló.
 [Windows nativo](https://hermes-agent.nousresearch.com/docs/user-guide/windows-native),
 [WSL2](https://hermes-agent.nousresearch.com/docs/user-guide/windows-wsl-quickstart).
 

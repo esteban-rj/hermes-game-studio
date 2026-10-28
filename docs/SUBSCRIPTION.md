@@ -34,6 +34,11 @@ explícitamente al mismo proveedor y modelo del rol para evitar selección `auto
 ```
 
 El preparador no instala Hermes, autentica, inicia procesos ni realiza inferencia.
+`-NativeProfile` usa la instalación local registrada y crea perfiles en su árbol
+nativo. `scripts/use-hermes.ps1` ofrece Version, Check, Login y Chat. Login actúa
+sobre el home raíz; Chat elige un perfil por proyecto/agente y fija proveedor y
+modelo aprobados explícitamente. Chat es una acción CLI del usuario, separada de
+la oficina. Ver [uso de repositorios y worktrees](PROJECTS.md).
 La validación cubre la preparación de estos archivos, no impone una restricción
 global sobre una instalación de Hermes o Codex lanzada fuera del estudio. El
 adaptador real deberá reutilizar la validación en cada inicio, escalada y llamada
@@ -49,11 +54,14 @@ Ese runtime no ofrece las herramientas nativas `delegate_task`, `memory`,
 `session_search` y `todo` durante el turno.
 [Documentación de Hermes](https://hermes-agent.nousresearch.com/docs/user-guide/features/codex-app-server-runtime).
 
-El inventario local confirmó una sesión ChatGPT iniciada en Codex CLI y no
-encontró un ejecutable Hermes en PATH o los launchers comprobados. La sesión de
-Codex no autentica automáticamente los homes Hermes: no copiar ni versionar
-tokens. Instalar/fijar Hermes, usar su flujo de autenticación soportado para la
-suscripción y verificar una llamada acotada antes de conectar la oficina.
+Se instaló Hermes v0.22.5, commit `bf0203a794a07aac3ff764972ab9087baa4e4f4e`,
+en Windows nativo y se prepararon seis perfiles `studio-<agente>`. El login de
+OpenAI se inicia con `scripts/use-hermes.ps1 -Action Login` para que el titular
+autorice en su navegador. No copiar tokens de Codex: los perfiles nativos pueden
+usar el OAuth del home raíz mediante la gestión de credenciales de Hermes.
+La configuración desactiva la adopción automática de logins externos.
+Autenticación, acceso efectivo a un modelo y conexión de la oficina son estados
+distintos; ninguno se acredita sólo por instalar el ejecutable.
 
 Los modelos y esfuerzos dependen del acceso real de la cuenta. Un catálogo no
 acredita acceso; una inferencia completada lo comprueba para esa petición.

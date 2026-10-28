@@ -1,5 +1,26 @@
 # Verificación de la base v0.1
 
+## Instalación Hermes y preparación Git local · 28 de octubre de 2026
+
+- Instalador oficial Windows: PASS, canal estable v0.22.5, commit
+  `bf0203a794a07aac3ff764972ab9087baa4e4f4e`.
+- `scripts/use-hermes.ps1 -Action Version`: PASS, CLI inicia y reporta Hermes
+  v0.22.5, Python 3.14.9 y OpenAI SDK 2.24.0.
+- Seis perfiles nativos `studio-<agente>` creados desde las identidades del
+  estudio, sin copiar credenciales. Configuración nativa validada con esquema 51.
+- Login OpenAI por navegador/PKCE preparado. La finalización del OAuth y el acceso
+  real al modelo son comprobaciones separadas. No se ejecutó inferencia.
+- Preparador Git probado en repositorios fixture: dry-run sin escritura; creación
+  desde commit; cambios fuente sin commit conservados; rechazo de destino existente
+  y de checkout principal para habilitar herramientas locales.
+- Planes de ambos proyectos locales comprobados en modo lectura. No se crearon
+  worktrees, commits ni cambios en los repositorios de juegos durante la preparación.
+- `node scripts/check.mjs`: PASS, 19 archivos JS/JSON. `node --test`: PASS, 8/8.
+- Rutas reales y mapas de proyectos quedan en `.runtime/*.local.json`, ignorados.
+  Los documentos y scripts versionados conservan IDs genéricos.
+- La oficina permanece en DEMO. Instalar el CLI y preparar perfiles no implementa
+  el adaptador, el sandbox ni el despacho autónomo desde la UI.
+
 ## Política de suscripción · 28 de octubre de 2026
 
 - `node scripts/check.mjs`: PASS, 19 archivos JS/JSON.

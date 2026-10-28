@@ -44,7 +44,7 @@ En «Cambio de UX» basta una petición: **Vera → Atlas → Pixel → Lupa →
 
 ## Decisión inicial: Windows local, híbrido después
 
-Recomendamos **Windows nativo para la oficina, Hermes y un futuro puente de aplicaciones**. Es la opción más directa si los agentes deben abrir el motor del proyecto o herramientas gráficas en el escritorio del usuario. Hermes documenta soporte Windows nativo. Docker queda como opción para builds y comandos aislados; un contenedor Linux no controla automáticamente las ventanas de Windows. No se instaló Docker, WSL ni Hermes durante esta entrega. [Soporte oficial de Windows](https://hermes-agent.nousresearch.com/docs/user-guide/windows-native).
+Recomendamos **Windows nativo para la oficina, Hermes y un futuro puente de aplicaciones**. En la máquina de esta entrega se instaló Hermes v0.22.5 para CLI y se prepararon seis perfiles; la oficina continúa en DEMO. Una copia nueva necesita su instalación local. Docker queda como opción para builds y comandos aislados; no se instaló Docker ni WSL. [Instalación y autenticación](docs/HERMES.md), [soporte oficial de Windows](https://hermes-agent.nousresearch.com/docs/user-guide/windows-native).
 
 El aislamiento real requiere permisos del sistema, directorios autorizados y un puente con operaciones limitadas. Un perfil y su SOUL.md orientan al agente, pero no constituyen un sandbox. Ver [arquitectura, alternativas y límites](docs/ARCHITECTURE.md).
 
@@ -65,7 +65,7 @@ Memoria, conversaciones, sesiones, claves y fotos privadas quedan fuera de Git. 
 ## Plan de construcción
 
 1. **Base entregada:** oficina demo, API, contratos, perfiles y plan. Revisar el flujo antes de pagar por inferencia.
-2. **Una conexión real:** instalar/configurar Hermes en un entorno elegido, seleccionar proveedor/modelos y presupuesto, crear homes aislados y conectar un agente de sólo lectura. La UI deberá mostrar `real` únicamente con evidencia del runtime.
+2. **Una conexión real:** Hermes CLI ya está instalado; completar autenticación y comprobar acceso a los modelos seleccionados. Implementar el adaptador para conectar un agente de sólo lectura a la oficina. La UI deberá mostrar `real` únicamente con evidencia del runtime.
 3. **Primer trabajo de código:** tarea pequeña en un worktree dedicado, descubriendo el motor y las convenciones del proyecto; Hermes orquesta y Codex puede ser una herramienta de código. Diff, pruebas, cancelación, permisos y aprobación antes de acciones externas sensibles.
 4. **Equipo y arte:** añadir traspasos, QA independiente, generación de assets con procedencia y revisión visual; limitar concurrencia y reintentos.
 5. **Voz y experiencia:** STT → Hermes → TTS o Realtime como capa de conversación, control de interrupciones y confirmación de órdenes de voz con efectos. El avatar personal ya está integrado; la voz sigue pendiente.

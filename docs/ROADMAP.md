@@ -8,7 +8,7 @@ Aceptación: se puede abrir sin paquetes externos, seleccionar cualquier agente,
 
 ## Fase 1: un agente real, lectura solamente
 
-Elegir Windows nativo o un entorno ya preparado; instalar Hermes con su guía oficial y fijar la revisión. El diagnóstico de esta entrega no instala nada. La ruta elegida es suscripción ChatGPT/Codex con Sol 6.1 como máximo; comprobar acceso y límites según [SUBSCRIPTION.md](SUBSCRIPTION.md). Preparar un home Atlas por proyecto, sin memoria ni credenciales compartidas. Implementar adaptador y tarea: resumir arquitectura de un único repositorio de juego sin editarlo.
+Hermes v0.22.5 ya se instaló en Windows nativo, fijado en `bf0203a794a07aac3ff764972ab9087baa4e4f4e`, y hay seis perfiles nativos del estudio. Completar autenticación y comprobar acceso y límites de la suscripción ChatGPT/Codex con Sol 6.1 como máximo según [SUBSCRIPTION.md](SUBSCRIPTION.md). Separar memoria por proyecto/agente y compartir OAuth mediante el mecanismo nativo de la raíz, sin copiar tokens. Implementar el adaptador y una tarea de lectura sobre un único proyecto.
 
 Aceptación: run con ID, proyecto y perfil, estado real, resultado con referencias verificables, uso observado, timeout y cancelación probados. Sin autenticación de suscripción y límites configurados, el run se rechaza. Al agotar cuota, detenerse sin fallback a API. La demo continúa disponible y distinguible. Comparar los modelos autorizados con 3–5 tareas representativas.
 
