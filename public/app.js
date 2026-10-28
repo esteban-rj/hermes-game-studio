@@ -169,7 +169,7 @@ function renderTV() {
 function askPrisma(){selectAgent('prisma');$('#message').value='Crea una composición visual para nuestra oficina y muéstrala en la TV.';$('#message').focus();}
 function renderMedia() {
  const gallery=$('#media-gallery');gallery.replaceChildren();
- if(!state.media.length){const empty=node('div','gallery-empty');const graphic=node('span');graphic.innerHTML=icon('tv');const copy=node('div');copy.append(node('b',null,'La próxima gran idea va aquí.'),node('p',null,'Pide un gráfico a un agente o añade una imagen o vídeo.'));const button=node('button',null,'Crear con Prisma ↗');button.type='button';button.addEventListener('click',askPrisma);empty.append(graphic,copy,button);gallery.append(empty);}
+ if(!state.media.length){const empty=node('div','gallery-empty');const graphic=node('span');graphic.innerHTML=icon('tv');const copy=node('div');copy.append(node('b',null,'La próxima gran idea va aquí.'),node('p',null,'Pide un gráfico a un agente o añade una imagen o vídeo.'));const button=node('button',null,'Crear con Cata ↗');button.type='button';button.addEventListener('click',askPrisma);empty.append(graphic,copy,button);gallery.append(empty);}
  for(const asset of state.media) {
   const card=node('button','media-card');card.type='button';card.setAttribute('aria-label','Ver '+asset.title);
   if(asset.kind==='image'){const image=mediaElement(asset);image.className='media-thumbnail';card.append(image);}

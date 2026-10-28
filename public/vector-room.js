@@ -135,12 +135,12 @@ export function roomMarkup() {
     <g transform="translate(74 152)"><rect x="-34" y="-21" width="68" height="13" rx="6" fill="#6b5644"/><rect x="-22" y="-41" width="44" height="20" rx="5" fill="#566954"/><path d="M-13-41v-17m13 17v-24m12 24v-15" stroke="#74937a" stroke-width="4" stroke-linecap="round"/></g>
     <ellipse cx="1085" cy="633" rx="150" ry="143" fill="url(#vr-floor-lamp-glow)" class="vr-light"/><ellipse cx="1567" cy="315" rx="75" ry="150" fill="url(#vr-floor-lamp-glow)"/>
     <g fill="#b09b7f" opacity=".6" font-size="11" font-weight="650" letter-spacing="3"><text x="116" y="196">CREAR · CONSTRUIR · COMPARTIR</text><text x="116" y="536">EL SIGUIENTE GRAN JUEGO EMPIEZA AQUÍ</text></g>
-    ${station('atlas', 'Atlas', 'ARQUITECTURA', '#98aa90', 1)}
-    ${station('pixel', 'Pixel', 'DESARROLLO', '#8faeaa', 0)}
-    ${station('prisma', 'Prisma', 'DIRECCIÓN VISUAL', '#bd9bb1', 2)}
-    ${station('nodo', 'Nodo', 'COORDINACIÓN', '#b5ae86', 1)}
-    ${station('ux', 'Vera', 'EXPERIENCIA / UX', '#a7b6a0', 2)}
-    ${station('lupa', 'Lupa', 'CALIDAD', '#b8a4b6', 0)}
+    ${station('atlas', 'Camilo', 'ARQUITECTURA', '#98aa90', 1)}
+    ${station('pixel', 'Santi', 'DESARROLLO', '#8faeaa', 0)}
+    ${station('prisma', 'Cata', 'DIRECCIÓN VISUAL', '#bd9bb1', 2)}
+    ${station('nodo', 'Nico', 'COORDINACIÓN', '#b5ae86', 1)}
+    ${station('ux', 'Vale', 'EXPERIENCIA / UX', '#a7b6a0', 2)}
+    ${station('lupa', 'Pipe', 'CALIDAD', '#b8a4b6', 0)}
     ${plant(76, 235, .75)}${plant(972, 232, .8, '#a29c89')}
     <g transform="translate(969 394)"><rect x="-30" y="-65" width="60" height="88" rx="6" fill="#705844"/><rect x="-24" y="-59" width="48" height="76" rx="2" fill="#b7ab90"/><circle cy="-31" r="16" fill="#9a7487"/><path d="M-22 14L1-20l22 34z" fill="#62715a"/><path d="M-22 13L-8-7 9 13" fill="#9c7a54"/></g>
     <g filter="url(#vr-shadow)"><rect x="1093" y="193" width="454" height="266" rx="27" fill="#5d4c40"/><rect x="1103" y="203" width="434" height="246" rx="21" fill="#353c37"/>

@@ -7,12 +7,12 @@ genérico. La oficina v0.2 usa conversaciones reales mediante los perfiles nativ
 
 | Agente | Modelo inicial | Razonamiento |
 | --- | --- | --- |
-| Atlas | gpt-6.1-sol | high |
-| Pixel | gpt-6.1-sol | medium |
-| Prisma | gpt-6.1-terra | medium |
-| Vera (ux) | gpt-6.1-terra | medium |
-| Nodo | gpt-6-luna | low |
-| Lupa | gpt-6.1-sol | high |
+| Camilo | gpt-6.1-sol | high |
+| Santi | gpt-6.1-sol | medium |
+| Cata | gpt-6.1-terra | medium |
+| Vale (ux) | gpt-6.1-terra | medium |
+| Nico | gpt-6-luna | low |
+| Pipe | gpt-6.1-sol | high |
 
 Sol 6.1 es la única escalada prevista. Astra, modelos desconocidos, proveedores
 de API de pago y cambios automáticos de proveedor quedan fuera de esta selección.

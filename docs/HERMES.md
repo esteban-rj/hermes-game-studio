@@ -50,7 +50,7 @@ carácter pertenece allí. Instrucciones temporales del juego deben viajar con c
 tarea y sus fuentes del repositorio. [Identidad oficial](https://hermes-agent.nousresearch.com/docs/user-guide/features/personality).
 
 Los homes separan configuración, memorias y sesiones. Un home por combinación
-proyecto/agente evita que Atlas de un juego recuerde decisiones del otro.
+proyecto/agente evita que Camilo de un juego recuerde decisiones del otro.
 El CLI oficial también admite `hermes -p nombre chat` y
 `hermes --profile=nombre doctor` para perfiles registrados. Los homes que prepara
 este repositorio se seleccionan mediante `HERMES_HOME`, sin registrarlos en la
@@ -144,8 +144,8 @@ verificar en la versión elegida si hay contenedores compartidos.
    límites de tiempo/coste y auditoría privada. Restaurar estado tras reinicio.
 5. Permitir herramientas de un solo juego a través del backend. Probar rechazo
    cruzado con rutas y enlaces, no sólo por instrucciones de personalidad.
-6. Incorporar a Pixel con Codex como herramienta y a Prisma con herramientas
-   visuales disponibles; activar Lupa antes de permitir integración automática.
+6. Incorporar a Santi con Codex como herramienta y a Cata con herramientas
+   visuales disponibles; activar Pipe antes de permitir integración automática.
 7. Añadir voz como transporte independiente. La UI nunca obtiene claves maestras.
 
 Bot Mode es una superficie oficial para presentar perfiles como bots; no convierte
@@ -177,8 +177,8 @@ reinicio. [Kanban oficial](https://hermes-agent.nousresearch.com/docs/user-guide
 [código del CLI](https://github.com/NousResearch/hermes-agent/blob/main/hermes_cli/kanban.py).
 
 Proponemos boards de ejemplo `juego-a` y `juego-b`, más uno `studio` para el
-propio sistema. La cadena será **UX → Atlas → Pixel → Lupa → UX**; Nodo
-coordina dependencias y conflictos, Prisma aporta los paquetes de arte. Cada
+propio sistema. La cadena será **UX → Camilo → Santi → Pipe → UX**; Nico
+coordina dependencias y conflictos, Cata aporta los paquetes de arte. Cada
 handoff conserva petición original, criterios, identificador y evidencia. Los
 estados del estudio se mapearán de forma explícita al ciclo nativo, incluyendo
 revisión y bloqueo, sin tratarlos como enums idénticos.

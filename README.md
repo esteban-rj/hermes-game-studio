@@ -49,12 +49,16 @@ turno a la vez. El perfil muestra modelo, runtime y herramientas disponibles.
 
 | Agente | Función | Modelo | Razonamiento |
 | --- | --- | --- | --- |
-| Atlas | Arquitectura y planificación | gpt-6.1-sol | high |
-| Pixel | Implementación | gpt-6.1-sol | medium |
-| Prisma | Dirección visual | gpt-6.1-terra | medium |
-| Vera | Diseño UX | gpt-6.1-terra | medium |
-| Nodo | Coordinación | gpt-6-luna | low |
-| Lupa | QA | gpt-6.1-sol | high |
+| Camilo | Arquitectura y planificación | gpt-6.1-sol | high |
+| Santi | Implementación | gpt-6.1-sol | medium |
+| Cata | Dirección visual | gpt-6.1-terra | medium |
+| Vale | Diseño UX | gpt-6.1-terra | medium |
+| Nico | Coordinación | gpt-6-luna | low |
+| Pipe | QA | gpt-6.1-sol | high |
+
+Los nombres visibles son Camilo, Santi, Cata, Vale, Nico y Pipe. Los IDs técnicos
+`atlas`, `pixel`, `prisma`, `ux`, `nodo` y `lupa` se conservan para mantener
+compatibilidad con perfiles CLI, sesiones, memoria y resultados existentes.
 
 El máximo es **Sol 6.1**. No hay escalada a Astra ni fallback a API de pago.
 La autenticación no garantiza acceso a todos los modelos; cada perfil se verifica

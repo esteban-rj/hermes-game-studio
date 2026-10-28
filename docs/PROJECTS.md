@@ -73,10 +73,10 @@ git diff
 
 Para entregar, revisar el diff, ejecutar las pruebas pertinentes y crear un commit
 local sólo de los archivos de la tarea. Evitar `git add .` si hay cambios ajenos.
-Lupa revisa el commit concreto en otro worktree y con su perfil del mismo juego;
-no crear un segundo escritor sobre el home o worktree de Pixel. Atlas, Vera y
-Prisma pueden usar perfiles y worktrees propios si la tarea requiere herramientas
-de archivos. Nodo conserva su papel de coordinación y no modifica código.
+Pipe revisa el commit concreto en otro worktree y con su perfil del mismo juego;
+no crear un segundo escritor sobre el home o worktree de Santi. Camilo, Vale y
+Cata pueden usar perfiles y worktrees propios si la tarea requiere herramientas
+de archivos. Nico conserva su papel de coordinación y no modifica código.
 
 Git local no requiere GitHub ni credenciales de red para estado, diff, ramas,
 worktrees y commits. Push, merge y publicación no los inicia ningún preparador.

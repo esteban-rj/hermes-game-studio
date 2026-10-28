@@ -5,7 +5,7 @@
 Seis perfiles nativos autenticados por suscripción. La oficina envía mensajes a
 Hermes mediante el CLI JSONL, reanuda una sesión por agente y guarda el historial
 local. Se comprobaron respuestas reales de Luna, Terra y Sol 6.1, y continuidad
-de Atlas en el navegador. Un turno concurrente, cuatro iteraciones y presupuesto
+de Camilo en el navegador. Un turno concurrente, cuatro iteraciones y presupuesto
 nativo de 90 s; sin fallback a API. No hay despacho de tareas de juegos ni voz.
 La cancelación nativa verificada sigue pendiente; desconectar el CLI puede dejar
 el turno ejecutándose hasta su presupuesto. Ver [VERIFICATION.md](VERIFICATION.md).
@@ -26,13 +26,13 @@ Aceptación: run con ID, proyecto y perfil, estado real, resultado con referenci
 
 ## Fase 2: primera implementación en un juego
 
-Elegir una mejora pequeña en Juego A o Juego B. Atlas entrega plan y criterios; Pixel trabaja en un worktree del juego; Lupa verifica el diff y la escena. Integrar Codex App Server como herramienta si ofrece valor para código. No añadir todos los roles al primer run.
+Elegir una mejora pequeña en Juego A o Juego B. Camilo entrega plan y criterios; Santi trabaja en un worktree del juego; Pipe verifica el diff y la escena. Integrar Codex App Server como herramienta si ofrece valor para código. No añadir todos los roles al primer run.
 
 Aceptación: sólo cambia el worktree autorizado; motor y versión identificados; importación/build/pruebas documentadas más inspección visual cuando corresponda; artefactos y limitaciones registrados; se puede cancelar; ninguna tarea termina únicamente porque el implementador afirma que funcionó. Publicar o fusionar según la autorización del usuario para ese juego.
 
 ## Fase 3: coordinación, arte y workers
 
-Nodo coordina dependencias, locks y traspasos sobre un tablero Kanban nativo por juego, previa validación de versión y capacidades. Evitar duplicar su registro durable; el backend adapta sus eventos y añade permisos. Prisma añade guía visual, especificación de assets, procedencia y control de tamaño/licencia; no genera arte definitivo de la persona sin foto. Introducir workers Docker para builds sólo si aportan aislamiento/reproducibilidad. Escritorio con un lock por sesión.
+Nico coordina dependencias, locks y traspasos sobre un tablero Kanban nativo por juego, previa validación de versión y capacidades. Evitar duplicar su registro durable; el backend adapta sus eventos y añade permisos. Cata añade guía visual, especificación de assets, procedencia y control de tamaño/licencia; no genera arte definitivo de la persona sin foto. Introducir workers Docker para builds sólo si aportan aislamiento/reproducibilidad. Escritorio con un lock por sesión.
 
 Aceptación: dos tareas en juegos distintos no comparten memoria ni permisos; fallo/reintento conserva trazabilidad; límites de coste y concurrencia se aplican en código; asset importado y revisado en el motor del proyecto; QA independiente con evidencia.
 
