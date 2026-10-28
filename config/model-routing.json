@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "status": "selected-not-connected",
+  "note": "Política del estudio, no configuración nativa de Hermes. Selección autorizada: suscripción ChatGPT/Codex y GPT-6.1 Sol como modelo máximo. El acceso a cada modelo sigue pendiente de una inferencia real.",
+  "billing": { "mode": "chatgpt-subscription", "allowApiBilling": false },
+  "allowedProviders": ["openai-codex"],
+  "allowedModels": ["gpt-6-luna", "gpt-6.1-terra", "gpt-6.1-sol"],
+  "maximumModel": "gpt-6.1-sol",
+  "escalationModel": "gpt-6.1-sol",
+  "automaticFallback": false,
+  "routes": {
+    "atlas": { "provider": "openai-codex", "model": "gpt-6.1-sol", "reasoningEffort": "high" },
+    "pixel": { "provider": "openai-codex", "model": "gpt-6.1-sol", "reasoningEffort": "medium" },
+    "prisma": { "provider": "openai-codex", "model": "gpt-6.1-terra", "reasoningEffort": "medium" },
+    "ux": { "provider": "openai-codex", "model": "gpt-6.1-terra", "reasoningEffort": "medium" },
+    "nodo": { "provider": "openai-codex", "model": "gpt-6-luna", "reasoningEffort": "low" },
+    "lupa": { "provider": "openai-codex", "model": "gpt-6.1-sol", "reasoningEffort": "high" }
+  },
+  "limits": { "maxConcurrentRuns": 1, "maxDelegationDepth": 1, "maxRetriesPerTask": 1, "pauseOnSubscriptionLimit": true }
+}

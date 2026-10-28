@@ -8,9 +8,9 @@ Aceptación: se puede abrir sin paquetes externos, seleccionar cualquier agente,
 
 ## Fase 1: un agente real, lectura solamente
 
-Elegir Windows nativo o un entorno ya preparado; instalar Hermes con su guía oficial y fijar la revisión. El diagnóstico de esta entrega no instala nada. Elegir proveedor/modelo realmente disponible y un techo de gasto. Preparar un home Atlas por proyecto, sin memoria ni credenciales compartidas. Implementar adaptador y tarea: resumir arquitectura de un único repositorio de juego sin editarlo.
+Elegir Windows nativo o un entorno ya preparado; instalar Hermes con su guía oficial y fijar la revisión. El diagnóstico de esta entrega no instala nada. La ruta elegida es suscripción ChatGPT/Codex con Sol 6.1 como máximo; comprobar acceso y límites según [SUBSCRIPTION.md](SUBSCRIPTION.md). Preparar un home Atlas por proyecto, sin memoria ni credenciales compartidas. Implementar adaptador y tarea: resumir arquitectura de un único repositorio de juego sin editarlo.
 
-Aceptación: run con ID, proyecto y perfil, estado real, resultado con referencias verificables, coste o uso observado, timeout y cancelación probados. Sin clave/presupuesto, el run se rechaza. La demo continúa disponible y distinguible. Revisar el modelo económico frente al fuerte con 3–5 tareas representativas antes de decidir rutas permanentes.
+Aceptación: run con ID, proyecto y perfil, estado real, resultado con referencias verificables, uso observado, timeout y cancelación probados. Sin autenticación de suscripción y límites configurados, el run se rechaza. Al agotar cuota, detenerse sin fallback a API. La demo continúa disponible y distinguible. Comparar los modelos autorizados con 3–5 tareas representativas.
 
 ## Fase 2: primera implementación en un juego
 
@@ -32,4 +32,4 @@ Aceptación: micrófono sólo con acción del usuario, claves sólo backend, int
 
 ## Decisiones pendientes
 
-Proveedor/modelos y techo de gasto; versión/instalación de Hermes; primer juego piloto y tarea; aplicaciones/herramientas que el puente puede abrir; política de aprobación para commits/push de los juegos; dirección visual final; STT/TTS o Realtime. Ninguna impide revisar la demo actual.
+Acceso y límites reales de la suscripción; versión/instalación de Hermes; primer juego piloto y tarea; aplicaciones/herramientas que el puente puede abrir; política de aprobación para commits/push de los juegos; dirección visual final; STT/TTS o Realtime. Ninguna impide revisar la demo actual.

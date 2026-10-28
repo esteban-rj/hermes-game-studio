@@ -1,5 +1,20 @@
 # Verificación de la base v0.1
 
+## Política de suscripción · 28 de octubre de 2026
+
+- `node scripts/check.mjs`: PASS, 19 archivos JS/JSON.
+- `node --test`: PASS, 8/8; incluye rechazo de Astra, modelos desconocidos y
+  proveedores de API, y escalada autorizada a Sol 6.1.
+- Preparación de los seis homes `studio`: PASS, proveedor `openai-codex`, modelos
+  y razonamiento por rol, sin fallback, procesos ni copia de credenciales.
+- `.runtime/hermes/studio/*` permanece ignorado por Git.
+- Codex CLI 0.165.0-alpha.1.2 informó autenticación ChatGPT. No se imprimieron
+  datos de cuenta ni tokens. Hermes no se encontró en PATH o launchers revisados.
+- No hubo llamadas de inferencia ni comprobación de acceso efectivo a modelos.
+  El servidor de la oficina continúa siendo DEMO.
+
+## Evidencia anterior
+
 Fecha local: 27 de octubre de 2026. Entorno observado: Windows, Node.js 24.22.1. Verificación sobre los archivos finales de esta entrega, sin instalar paquetes ni iniciar inferencia.
 
 | Comprobación | Resultado observado |

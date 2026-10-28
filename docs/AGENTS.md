@@ -5,7 +5,11 @@ identidades completas, entradas/salidas, disciplina de contexto, aceptación y
 escalamiento están versionadas en `hermes/profiles/<id>/SOUL.md` y
 `hermes/agents.json`. Ningún rol tiene un runtime activo en este prototipo.
 
-| ID | Personaje | Trabajo | Selección de modelo pendiente |
+La selección actual usa la suscripción ChatGPT/Codex, con **Sol 6.1 como máximo**:
+Atlas, Pixel y Lupa con Sol 6.1; Prisma y Vera con Terra 6.1; Nodo con Luna.
+Ver [política aplicada al preparador y conexión pendiente](SUBSCRIPTION.md).
+
+| ID | Personaje | Trabajo | Criterio de selección |
 | --- | --- | --- | --- |
 | ux | Vera, diseñadora turquesa | Flujos, interacción, accesibilidad y aceptación UX | Razonamiento de diseño; validar contra intención y criterios |
 | atlas | Cartógrafo violeta | Arquitectura, planes y decisiones | Razonamiento fuerte; probar calidad con decisiones del motor |

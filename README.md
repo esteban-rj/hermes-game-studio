@@ -25,16 +25,20 @@ Selecciona proyecto y agente, envía un mensaje o crea una tarea demo. Avanza su
 
 ## Equipo propuesto
 
-| Personaje | Función | Política de modelo futura |
+| Personaje | Función | Modelo seleccionado, conexión pendiente |
 | --- | --- | --- |
-| Atlas · violeta | Arquitectura, alcance, planes y criterios de aceptación | Razonamiento fuerte |
-| Pixel · azul | Implementación acotada y evidencia del diff | Código con coste contenido |
-| Prisma · coral | Personajes, mapas, assets y coherencia visual | Visión y herramientas gráficas según necesidad |
-| Vera · turquesa | Diseño UX, intención del usuario y validación final de la experiencia | Análisis de interacción |
-| Nodo · verde | Coordinación, dependencias, presupuesto y traspasos | Modelo económico cuando baste |
-| Lupa · amarillo | QA independiente y pruebas reproducibles | Capacidad suficiente para verificar |
+| Atlas · violeta | Arquitectura, alcance, planes y criterios de aceptación | GPT-6.1 Sol · high |
+| Pixel · azul | Implementación acotada y evidencia del diff | GPT-6.1 Sol · medium |
+| Prisma · coral | Personajes, mapas, assets y coherencia visual | GPT-6.1 Terra · medium |
+| Vera · turquesa | Diseño UX, intención del usuario y validación final de la experiencia | GPT-6.1 Terra · medium |
+| Nodo · verde | Coordinación, dependencias, presupuesto y traspasos | GPT-6 Luna · low |
+| Lupa · amarillo | QA independiente y pruebas reproducibles | GPT-6.1 Sol · high |
 
 Vera define la experiencia y Prisma produce la dirección y los paquetes visuales. Nodo conserva contexto y controla dependencias; Lupa verifica de forma independiente. Son seis perfiles, no seis procesos de pago siempre activos. Ningún identificador de modelo ni acceso a proveedor se da por hecho. Ver [perfiles y contratos de trabajo](docs/AGENTS.md).
+
+Selección autorizada: **suscripción ChatGPT/Codex, con GPT-6.1 Sol como máximo**.
+El preparador rechaza Astra, modelos desconocidos y proveedores de API de pago;
+no arranca inferencia. Ver [política y conexión pendiente](docs/SUBSCRIPTION.md).
 
 En «Cambio de UX» basta una petición: **Vera → Atlas → Pixel → Lupa → Vera**, con Nodo coordinando. El prototipo conserva solicitud, proyecto, criterios y referencias entre cinco tareas dependientes. Cada clic simula un traspaso; no representa código ni pruebas ejecutadas. La fase real evaluará [Kanban nativo de Hermes](https://hermes-agent.nousresearch.com/docs/user-guide/features/kanban) como registro durable por juego.
 
@@ -51,7 +55,7 @@ El aislamiento real requiere permisos del sistema, directorios autorizados y un 
 | public/ | Oficina canvas, interacción accesible y panel del equipo |
 | server.mjs + lib/ | Servidor loopback y adaptador demo sin dependencias |
 | hermes/ | Plantillas de identidad y configuración documentada de Hermes |
-| config/ | Políticas propias del estudio, proyectos y rutas de modelos pendientes |
+| config/ | Políticas propias del estudio, proyectos y selección de modelos por suscripción |
 | contracts/ | API del estudio y esquemas de tareas/eventos |
 | scripts/ | Comprobación local y preparación/diagnóstico de Hermes |
 | docs/ | Plan, integración, voz, perfiles y registro de verificación |

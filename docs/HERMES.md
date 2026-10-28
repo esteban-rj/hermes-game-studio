@@ -1,5 +1,10 @@
 # Integración de Hermes: base preparada, runtime pendiente
 
+Decisión posterior, 28 de octubre de 2026: **suscripción ChatGPT/Codex y Sol 6.1
+como máximo**. Ver [rutas elegidas y límites](SUBSCRIPTION.md). El preparador ahora
+usa `config/model-routing.json` y rechaza proveedores de API de pago y modelos
+fuera de la lista. Hermes sigue sin instalarse ni conectarse a la oficina.
+
 Revisión: 27 de octubre de 2026. Se consultaron la documentación oficial y los
 archivos de la rama `main` del repositorio de Nous Research. No se obtuvo un SHA
 actual verificable desde este entorno; por eso esta base **no declara una versión
@@ -15,7 +20,8 @@ y repetir la comprobación de configuración.
 - Semillas de memoria revisables, sin historial privado.
 - `scripts/hermes-doctor.ps1`: inventario de sólo lectura, sin lanzar Hermes.
 - `scripts/prepare-hermes.ps1`: copia una identidad a un home nuevo y local,
-  exige modelo/proveedor/workspace explícitos y rechaza sobrescrituras.
+  exige workspace, toma proveedor/modelo de la política elegida y rechaza
+  sobrescrituras y overrides fuera de la lista autorizada.
 
 No existe todavía un proceso Hermes conectado a la oficina. Crear perfiles no
 crea un equipo en ejecución. El adaptador demo no utiliza credenciales ni modelos.
@@ -38,8 +44,8 @@ sólo fija el directorio inicial. Un único proceso escritor debe poseer cada ho
 La configuración nativa es `config.yaml`; claves y tokens pertenecen a `.env`
 u otro almacén privado soportado. El catálogo `agents.json`, los presupuestos y
 los permisos del estudio son **nuestros contratos**, no claves inventadas dentro
-del YAML de Hermes. No fijamos nombres de modelos por catálogo: hace falta
-comprobar acceso y coste de la cuenta elegida.
+del YAML de Hermes. La política fija los modelos elegidos; hace falta comprobar
+acceso y límites de la suscripción antes de habilitarlos.
 [Configuración oficial](https://hermes-agent.nousresearch.com/docs/user-guide/configuration).
 
 ## Preparar un home sin instalar ni ejecutar inferencia
@@ -49,11 +55,9 @@ Desde la raíz del repositorio, en PowerShell:
 ```powershell
 .\scripts\hermes-doctor.ps1
 
-# Valores elegidos de la cuenta/proveedor real; estas preguntas son locales.
-$chosenProvider = Read-Host 'Proveedor soportado por tu Hermes'
-$chosenModel = Read-Host 'Identificador exacto del modelo disponible'
+# Usa la selección por suscripción de config/model-routing.json.
 .\scripts\prepare-hermes.ps1 -Project studio -Agent atlas `
-  -Workspace (Get-Location).Path -Provider $chosenProvider -Model $chosenModel
+  -Workspace (Get-Location).Path
 ```
 
 El destino es `.runtime/hermes/studio/atlas/`. El script no escribe en el
