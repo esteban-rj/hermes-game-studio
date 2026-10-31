@@ -125,3 +125,58 @@ La ampliación del avatar usa dibujo Canvas nativo en un módulo exclusivo del j
 La revisión de materiales separa el entorno en public/room.js y conserva la lógica de movimiento, los obstáculos y los personajes. Se repitieron el check estático y las cinco pruebas después de integrarlo. La revisión visual detectó que los nombres centrados quedaban parcialmente ocultos por los ocupantes; se movieron al extremo del canto y se comprobó su legibilidad en la escena final. Las vistas previas anteriores se conservan con nombres distintos.
 
 La revisión de personajes y objetos introduce un motor compartido de sprites con cuatro orientaciones, pasos y paletas por identidad. Los retratos se ampliaron para evitar recortes, y el punto de entrada se desplazó ligeramente para que el jugador no se solape con el agente UX. Se comprobaron desplazamiento cardinal, colisión con la mesa, interacción E y render de objetos/retratos en el navegador. Las cinco pruebas y el check estático pasaron. La renovación conserva el estado demo de Hermes y voz.
+
+
+## v0.5 · Anime y archivador · 2026-10-30
+
+Historia: abrir el archivador, elegir un proyecto local, conversar con un agente
+con perfil propio y leer el worktree mediante MCP, mostrando la respuesta real.
+
+| Límite del flujo | Evidencia |
+| --- | --- |
+| UI | SVG anime, archivador físico y botón accesibles; clic del mueble verificado después de excluirlo de la captura de arrastre de cámara |
+| Selección → API | Proyecto activo y carpeta visibles; GET /api/studio con projectId devuelve sólo sus conversaciones |
+| API → permisos | Dos worktrees autorizados, seis agentes por proyecto; doce accesos comprobados |
+| Hermes → MCP | Nico usó project_info, list_files y read_file reales; respuesta final confirmó lectura del README del proyecto elegido |
+| Respuesta → UI | Mensaje real visible en el chat y estado de agente inactivo al terminar |
+| Móvil | 390 × 844: archivador, rutas envueltas y seis retratos; ancho de página 390, sin desborde horizontal |
+| Regresión | 25 pruebas: permisos, rutas externas, enlaces, hash, respaldo, conflictos, sólo lectura, aislamiento de sesiones y geometría del mueble |
+
+La primera lectura llegó a las herramientas pero alcanzó cuatro iteraciones:
+el descubrimiento de herramientas también consume turnos. Los proyectos usan
+ocho iteraciones y conservan 90 segundos. Hermes fija la política al crear la
+sesión; cuando cambia ese límite, el adaptador conserva el ID previo y el
+historial UI y crea otra sesión nativa, sin borrar memoria. La repetición real
+terminó con respuesta de texto tras cuatro de ocho llamadas permitidas.
+
+Las ediciones se verificaron en archivos temporales con fixtures; no se editó
+código de los juegos durante esta prueba. No se verificaron builds ni terminal,
+que no se ofrecen en este puente. Nombres/rutas reales, registros de herramientas
+y conversaciones quedan en configuración y evidencia privadas ignoradas por Git.
+
+
+## v0.6 · Lina y voz local · 2026-10-30
+
+Historia verificada: audio en español → transcripción local → nombre del agente
+→ mensaje real a Hermes → respuesta textual → síntesis local y reproducción.
+
+| Límite del flujo | Evidencia |
+| --- | --- |
+| Audio → texto | Piper produjo una muestra con «Camilo»; Whisper transcribió la consulta real y el router identificó atlas |
+| Texto → Hermes | POST /api/messages con source=voice; Camilo respondió con gpt-6.1-sol usando la suscripción existente |
+| Hermes → audio | La respuesta se sintetizó en WAV válido sin API de audio; evidencia y muestras fuera de Git |
+| UI → reproducción | Escuchar pasó por «Reproduciendo la voz sintética» a «Muestra finalizada», sin errores en consola |
+| Permisos | Pruebas de conexión hablada con perfil/sesión distintos, historial visible compartido y escritura rechazada incluso con proyecto read-write |
+| Móvil | Vista de 390 × 844; ancho útil y contenido de 375 px por scrollbar, sin desbordamiento horizontal |
+| Regresión | 28 pruebas y check estático de 35 archivos JSON/JS |
+
+La primera instalación detectó una incompatibilidad conocida de Faster Whisper
+1.2.1 con PyAV 19. Se fijó av<19 y se verificó con PyAV 18.1.0; no se modificó
+la instalación Python de Hermes ni se usó un proveedor cloud como sustitución.
+
+No se activó ni escuchó el micrófono del usuario. El recorrido real usó una
+muestra sintética en español. Queda al usuario conceder el permiso de micrófono
+y comprobar su dispositivo/acústica. La escucha es por turnos, con silencio para
+cerrar frases; no es una llamada de voz con interrupción simultánea. Las muestras
+de verificación se guardaron explícitamente; el runtime descarta el audio del
+micrófono y conserva sólo los mensajes textuales dirigidos a un agente.

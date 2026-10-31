@@ -88,3 +88,24 @@ regresión.
 El CLI JSONL usa internamente el gateway de la versión instalada. Las superficies oficiales HTTP/SSE y JSON-RPC quedan como alternativas futuras. No se raspa la pantalla TUI ni se interpretan logs como respuestas. [Integración programática oficial](https://hermes-agent.nousresearch.com/docs/developer-guide/programmatic-integration).
 
 Contrato interno deseado (propio, todavía no implementado): `start(task, profile, scope) → runId`, `subscribe(runId) → eventos`, `cancel(runId) → resultado`, `capabilities() → estado comprobado`. La UI seguirá consultando la API del estudio. Los esquemas no pretenden definir la API nativa de Hermes.
+
+
+## Puente de archivos y archivador (v0.5)
+
+La UI consulta `GET /api/studio?projectId=<id>`; el servidor devuelve sólo las
+conversaciones del proyecto elegido, junto al catálogo local. Mensajes y eventos
+transportan el projectId. El backend conserva los historiales studio existentes y
+usa claves proyecto:agente para las sesiones nuevas.
+
+`lib/project-profiles.mjs` materializa perfiles nativos separados y configura
+un servidor MCP stdio de herramientas acotadas. `lib/projects.mjs` aplica el
+registro permitido, límites de rutas y control de edición con sha256; no se
+entrega la herramienta terminal. `scripts/project-mcp.mjs` serializa sus
+llamadas y conserva el protocolo JSON-RPC por líneas. La UI muestra la carpeta
+real y los permisos; un SOUL no se usa como mecanismo de seguridad.
+
+El render SVG de personajes usa `public/anime-heads.js`: ojos por capas,
+siluetas de cabello y sombreado cel. Se conservan caminata, descanso y trabajo.
+El archivador comparte geometría con colisiones y permite interacción con ratón,
+touch o teclado. Las limitaciones de terminal/escritorio y sandbox completo de
+las secciones anteriores continúan; el acceso de archivos MCP ya está implementado.

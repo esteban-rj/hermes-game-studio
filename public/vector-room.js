@@ -6,7 +6,9 @@ export const AGENT_SPOTS = Object.freeze({
 });
 export const TV = Object.freeze({ x: 1130, y: 220, width: 380, height: 214 });
 export const USAGE_TV = Object.freeze({ x: 700, y: 55, width: 260, height: 128 });
+export const CABINET = Object.freeze({ x:680,y:900,w:210,h:125,approach:{x:800,y:850} });
 export const OBSTACLES = Object.freeze([
+  CABINET,
   ...Object.values(AGENT_SPOTS).map(({ x, y }) => ({ x: x - 95, y: y - 160, w: 190, h: 95 })),
   { x: 1120, y: 610, w: 400, h: 110 },
   { x: 1200, y: 784, w: 230, h: 94 },
@@ -16,7 +18,7 @@ export const OBSTACLES = Object.freeze([
 ]);
 
 function plant(x, y, scale = 1, pot = '#b8816d') {
-  return `<g transform="translate(${x} ${y}) scale(${scale})">
+  return `<g transform="translate(${x} 16) scale(${scale})">
     <ellipse cy="22" rx="34" ry="13" fill="#6c6552" opacity=".12"/>
     <path d="M-24-8h48l-5 34c-8 9-30 9-38 0z" fill="${pot}"/>
     <ellipse cy="-8" rx="24" ry="9" fill="#9b7558"/><ellipse cy="-8" rx="18" ry="6" fill="#262a25"/>
@@ -173,6 +175,7 @@ export function roomMarkup() {
       <ellipse cx="1356" cy="818" rx="22" ry="13" fill="#6f5237"/><ellipse cx="1356" cy="815" rx="14" ry="10" fill="#d2c3a2"/><ellipse cx="1356" cy="811" rx="9" ry="6" fill="#5f3f28"/><path d="M1370 808q14 0 8 10h-9" stroke="#d2c3a2" stroke-width="5" fill="none"/>
     </g>
     <g transform="translate(1085 692)"><path d="M0 0v-129" stroke="#8d785a" stroke-width="5" stroke-linecap="round"/><ellipse cy="3" rx="29" ry="8" fill="#61503d"/><path d="M-24-129q3-43 24-43t24 43z" fill="#ca9e61"/><ellipse cy="-129" rx="24" ry="7" fill="#ffe3a1"/></g>
+    <g id="office-cabinet" role="button" tabindex="0" aria-label="Abrir archivador de proyectos" transform="translate(680 900)"><title>Archivador de proyectos locales</title><ellipse cx="108" cy="127" rx="118" ry="15" fill="#111923" opacity=".4"/><path d="M0 0 16-14h190l12 14v117H0Z" fill="#40585c" stroke="#829d91" stroke-width="2"/><path d="M0 0h218v10H0Z" fill="#74877a"/><path d="M207 10h11v107h-11Z" fill="#2d434a"/><g transform="translate(9 49)"><rect width="192" height="28" rx="3" fill="#344a50" stroke="#667f78"/><rect x="71" y="9" width="52" height="11" rx="2" fill="#c4b98f"/><path d="M84 12h26" stroke="#6d765d" stroke-width="2"/><path d="M16 4h35" stroke="#b8a4d7" stroke-width="4"/></g><g transform="translate(9 82)"><rect width="192" height="28" rx="3" fill="#344a50" stroke="#667f78"/><rect x="71" y="9" width="52" height="11" rx="2" fill="#c4b98f"/><path d="M84 12h26" stroke="#6d765d" stroke-width="2"/><path d="M16 4h35" stroke="#b5cc9c" stroke-width="4"/></g><g transform="translate(9 undefined)"><rect width="192" height="28" rx="3" fill="#344a50" stroke="#667f78"/><rect x="71" y="9" width="52" height="11" rx="2" fill="#c4b98f"/><path d="M84 12h26" stroke="#6d765d" stroke-width="2"/><path d="M16 4h35" stroke="#d5b16f" stroke-width="4"/></g><text x="108" y="-24" text-anchor="middle" fill="#c8d7b6" font-size="13" letter-spacing="2">ARCHIVADOR · PROYECTOS</text><path d="M14 119v8m190-8v8" stroke="#24343a" stroke-width="6"/></g>
     ${plant(1549, 872, .87, '#b59985')}${plant(103, 898, .9, '#a6aa90')}
     <g transform="translate(253 918)"><rect width="118" height="35" rx="10" fill="#65513e"/><rect x="5" y="-5" width="108" height="27" rx="8" fill="#9d8261"/><rect x="14" y="-20" width="41" height="16" rx="3" fill="#708269"/><rect x="19" y="-30" width="42" height="11" rx="2" fill="#8e6d7b"/><text x="75" y="12" text-anchor="middle" fill="#d9c4a0" font-size="9" font-weight="700">PLAY</text></g>
     <g transform="translate(1500 1018)" fill="#b0a28c"><text text-anchor="end" font-size="11" letter-spacing="2" font-weight="600">UN ESTUDIO. INFINITAS POSIBILIDADES.</text><path d="M17-13v14m7-11V-3m7-5v2" fill="none" stroke="#9bab91" stroke-width="3" stroke-linecap="round"/></g>

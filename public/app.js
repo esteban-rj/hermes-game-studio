@@ -1,10 +1,13 @@
 import { characterMarkup, characterStyles } from './vector-characters.js';
 import { WORLD, AGENT_SPOTS, USAGE_TV, roomMarkup, roomStyles } from './vector-room.js';
 import { walkable, findPath, cameraTransform } from './navigation.js';
+import { createCabinet } from './project-cabinet.js';
+import { CABINET } from './vector-room.js';
+import { createVoice } from './voice.js';
 
 const $ = selector => document.querySelector(selector);
 const ns = 'http://www.w3.org/2000/svg';
-const state = { agents:[], conversations:{}, media:[], selected:null, busy:null, mode:null, connected:false, sending:false, live:null, tab:'chat', events:[], open:false, tvId:null };
+const state = { agents:[], projects:[], projectId:'studio', conversations:{}, media:[], selected:null, busy:null, mode:null, connected:false, sending:false, live:null, tab:'chat', events:[], open:false, tvId:null };
 const desktop = matchMedia('(min-width:1100px)');
 const reduced = matchMedia('(prefers-reduced-motion:reduce)');
 const player = { x:500,y:900,facing:1,path:[] };
@@ -25,7 +28,7 @@ const icons = {
 function icon(name) { return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (icons[name] || icons.tv) + '</svg>'; }
 function fillIcons(root=document) { root.querySelectorAll('[data-icon]').forEach(node => { node.innerHTML = icon(node.dataset.icon); }); }
 function node(tag,className,text) { const el=document.createElement(tag); if(className)el.className=className; if(text!==undefined)el.textContent=text; return el; }
-function portrait(id,activity='idle') { const svg=document.createElementNS(ns,'svg');svg.setAttribute('viewBox','-36 -126 78 132');svg.setAttribute('aria-hidden','true');svg.innerHTML=characterMarkup(id,{portrait:true,activity});return svg; }
+function portrait(id,activity='idle') { const svg=document.createElementNS(ns,'svg');svg.setAttribute('viewBox','-36 -126 78 132');svg.setAttribute('aria-hidden','true');svg.innerHTML=characterMarkup(id,{portrait:true,activity:activity==='idle'?'portrait':activity});return svg; }
 function selected() { return state.agents.find(agent=>agent.id===state.selected); }
 function owner(asset) { return state.agents.find(agent=>agent.id===asset.agentId)?.name || 'Equipo'; }
 function origin(asset) { return owner(asset)+(asset.source==='hermes'?' · Hermes':' · Adjunto'); }
@@ -39,6 +42,14 @@ fillIcons();
 $('#room-layer').innerHTML=roomMarkup();
 $('#player-sprite').innerHTML='<ellipse class="player-marker" cy="7" rx="23" ry="9"/>'+characterMarkup('player')+'<text class="agent-name-tag" y="30">TÚ</text>';
 const figures=new Map();
+const cabinet=createCabinet({getState:()=>state,onSelect:async id=>{
+ if(refreshing)await refreshing;
+ if(state.busy||state.sending)throw new Error('Espera a que termine la respuesta antes de cambiar de proyecto.');
+ const previous=state.projectId;state.projectId=id;state.live=null;
+ try{voice.contextChanged();await refresh();status('Proyecto activo: '+(state.projects.find(project=>project.id===id)?.name||id));}
+ catch(error){state.projectId=previous;throw error;}
+}});
+const voice=createVoice({getState:()=>state,selectAgent:id=>selectAgent(id,{voiceCall:true}),sendMessage});
 function renderTeam() {
  $('#agent-list').replaceChildren(...state.agents.map(agent=>{
   const button=node('button','agent-button');button.type='button';button.dataset.agent=agent.id;button.style.setProperty('--agent-color',agent.color);button.setAttribute('aria-pressed',String(agent.id===state.selected));
@@ -65,7 +76,7 @@ function renderTeam() {
 function renderChat() {
  const chat=state.conversations[state.selected]?.messages || [];
  const entries=[...chat];
- if(state.live?.agentId===state.selected&&state.live.text) entries.push({who:'agent',message:state.live.text,streaming:true});
+ if(state.live?.agentId===state.selected&&state.live.projectId===state.projectId&&state.live.text) entries.push({who:'agent',message:state.live.text,streaming:true});
  const thread=$('#chat-thread');thread.replaceChildren();
  if(!entries.length) {
   const empty=node('div','chat-empty');empty.append(node('span',null,'✦'),node('b',null,'Las buenas ideas empiezan hablando.'),document.createTextNode('Cuéntale a '+(selected()?.name||'tu equipo')+' lo que tienes en mente. También puedes pedirle un gráfico para la TV.'));thread.append(empty);
@@ -86,15 +97,17 @@ function renderSelected() {
  $('#selected-name').textContent=agent.name;$('#selected-role').textContent=agent.role.toUpperCase();$('#selected-status').textContent=agent.status==='running'?'Trabajando en su mesa…':'Durmiendo · listo para conversar';
  $('#selected-portrait').replaceChildren(portrait(agent.id,agent.status==='running'?'working':'idle'));$('#profile-description').textContent=agent.description;$('#profile-model').textContent=agent.model||'Modo de prueba';$('#model-note').textContent=(agent.model||'').replace('gpt-','');
  $('#profile-runtime').textContent=state.mode==='real'?'Hermes · tu suscripción':'Prueba explícita';$('#message').placeholder='Comparte una idea con '+agent.name+'…';renderChat();renderConnection();
+ const project=state.projects.find(project=>project.id===state.projectId);$('#chat-project-name').textContent=project?.name||'Conversación general';$('#chat-project-access').textContent=state.projectId==='studio'?'Elige una carpeta en el archivador para trabajar con archivos':project?.workspace||'Carpeta no disponible';
 }
 function renderConnection() {
  $('#runtime-badge').textContent=state.connected?(state.mode==='real'?'● HERMES CONECTADO':'DEMO LOCAL'):'Conectando…';
  $('#connection-label').textContent=state.connected?'En directo':'Reconectando…';$('#connection-light').style.background=state.connected?'#c1daa3':'#d7ac77';
  $('#chat-mode-note').textContent=state.busy?'Hermes está respondiendo…':state.mode==='real'?'Conversación real':'Respuesta simulada';
  $('#send-message').disabled=!state.connected||state.sending||Boolean(state.busy);
+ voice.paint();
 }
 function panelVisibility() { $('#chat-panel').inert=!desktop.matches&&!state.open;$('.studio-column').inert=!desktop.matches&&state.open;$('#chat-panel').setAttribute('role',desktop.matches?'complementary':'dialog');if(!desktop.matches&&state.open)$('#chat-panel').setAttribute('aria-modal','true');else $('#chat-panel').removeAttribute('aria-modal'); }
-function selectAgent(id) {state.selected=id;state.open=true;document.body.classList.add('chat-open');$('#chat-backdrop').hidden=desktop.matches;renderTeam();renderSelected();panelVisibility();switchTab('chat');if(!desktop.matches)$('#close-chat').focus({preventScroll:true});}
+function selectAgent(id,{voiceCall=false}={}) {if(!voiceCall)voice.contextChanged();state.selected=id;state.open=true;document.body.classList.add('chat-open');$('#chat-backdrop').hidden=desktop.matches;renderTeam();renderSelected();panelVisibility();switchTab('chat');if(!desktop.matches)$('#close-chat').focus({preventScroll:true});}
 function closeChat() {state.open=false;document.body.classList.remove('chat-open');$('#chat-backdrop').hidden=true;panelVisibility();$('#agent-list [data-agent="'+state.selected+'"]')?.focus({preventScroll:true});}
 function switchTab(tab) {state.tab=tab;for(const item of ['chat','profile']){$('#tab-'+item).setAttribute('aria-selected',String(tab===item));$('#panel-'+item).hidden=tab!==item;}}
 for(const tab of ['chat','profile'])$('#tab-'+tab).addEventListener('click',()=>switchTab(tab));
@@ -103,7 +116,7 @@ desktop.addEventListener('change',()=>{$('#chat-backdrop').hidden=desktop.matche
 let refreshing;
 async function refresh() {
  if(refreshing)return refreshing;
- refreshing=(async()=>{const data=await api('/api/studio');state.agents=data.agents;state.mode=data.mode;state.busy=data.busy;state.conversations=data.conversations||{};state.media=data.media||[];if(!state.selected)state.selected=data.agents[0]?.id;renderTeam();renderSelected();renderMedia();})();
+ refreshing=(async()=>{const data=await api('/api/studio?projectId='+encodeURIComponent(state.projectId));state.agents=data.agents;state.projects=data.projects||[];state.mode=data.mode;state.busy=data.busy;state.conversations=data.conversations||{};state.media=data.media||[];if(!state.selected)state.selected=data.agents[0]?.id;renderTeam();renderSelected();renderMedia();cabinet.render();})();
  try{await refreshing;}finally{refreshing=null;}
 }
 function addEvent(type,data={},agentId) {
@@ -121,7 +134,7 @@ function connectEvents() {
  stream.onmessage=event=>{
   try {
    const packet=JSON.parse(event.data);
-   if(packet.type==='message.delta'){if(state.live?.runId!==packet.runId)state.live={runId:packet.runId,agentId:packet.agentId,text:''};state.live.text+=packet.data.text||'';renderChat();return;}
+   if(packet.type==='message.delta'){if(packet.projectId!==state.projectId)return;if(state.live?.runId!==packet.runId)state.live={runId:packet.runId,agentId:packet.agentId,projectId:packet.projectId,text:''};state.live.text+=packet.data.text||'';renderChat();return;}
    if(packet.type==='run.completed'||packet.type==='run.failed')state.live=null;
    if(packet.type==='artifact.created')state.tvId=packet.data.asset.id;
    addEvent(packet.type,packet.data,packet.agentId);
@@ -129,16 +142,19 @@ function connectEvents() {
   }catch{status('No se pudo interpretar una actualización.');}
  };
 }
-$('#chat-form').addEventListener('submit',async event=>{
- event.preventDefault();const input=$('#message');const message=input.value.trim();if(!message||!state.selected||state.sending||state.busy)return;
- const agentId=state.selected;state.sending=true;const chat=state.conversations[agentId]||={messages:[]};chat.messages.push({who:'user',message});input.value='';renderChat();renderConnection();status('Hermes está preparando su respuesta…');
+async function sendMessage(message,{agentId=state.selected,projectId=state.projectId,source='text'}={}) {
+ if(!message||!agentId||state.sending||state.busy||!state.connected)throw new Error('Espera a que termine la respuesta y comprueba la conexión.');
+ if(agentId!==state.selected||projectId!==state.projectId)throw new Error('Cambió el agente o proyecto. Repite la llamada.');
+ state.sending=true;const chat=state.conversations[agentId]||={messages:[]};chat.messages.push({who:'user',message});if(source==='text')$('#message').value='';renderChat();renderConnection();status('Hermes está preparando su respuesta…');
  try {
-  const result=await api('/api/messages',{agentId,projectId:'studio',message,clientMessageId:crypto.randomUUID()});state.live=null;
+  const result=await api('/api/messages',{agentId,projectId,message,source,clientMessageId:crypto.randomUUID()});state.live=null;
   if(state.mode==='real')await refresh();else{chat.messages.push({who:'agent',message:result.reply});renderChat();}
   if(state.selected===agentId)status(result.media?.length?'Resultado publicado en la TV.':result.model+' · respuesta de Hermes');
- }catch(error){state.live=null;await refresh().catch(()=>{});status(error.message);}
+  return result;
+ }catch(error){state.live=null;await refresh().catch(()=>{});status(error.message);throw error;}
  finally{state.sending=false;renderConnection();}
-});
+}
+$('#chat-form').addEventListener('submit',event=>{event.preventDefault();const message=$('#message').value.trim();if(message)sendMessage(message).catch(()=>{});});
 $('#message').addEventListener('keydown',event=>{if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();if(!$('#send-message').disabled)$('#chat-form').requestSubmit();}});
 
 // Galería y TV comparten el mismo resultado. El vídeo se reproduce sólo por acción del usuario.
@@ -255,7 +271,7 @@ function setZoom(value,anchor) {
 }
 function walkTo(target) {player.path=findPath(player,target);if(player.path.length){camera.follow=true;$('#walk-tip').style.opacity='0';}return player.path.length>0;}
 function move(dx,dy){const x=player.x+dx,y=player.y+dy;if(walkable(x,player.y))player.x=x;if(walkable(player.x,y))player.y=y;if(Math.abs(dx)>.1)player.facing=dx>0?1:-1;}
-function interact(){if(nearest?.id==='tv'){if(state.media.length)showMedia(state.tvId||state.media[0].id);else askPrisma();}else if(nearest)selectAgent(nearest.id);}
+function interact(){if(nearest?.id==='cabinet'){cabinet.open();}else if(nearest?.id==='tv'){if(state.media.length)showMedia(state.tvId||state.media[0].id);else askPrisma();}else if(nearest)selectAgent(nearest.id);}
 function tick(time) {
  const dt=Math.min(.04,(time-lastTime)/1000||.016);lastTime=time;
  let dx=Number(keys.has('d')||keys.has('arrowright'))-Number(keys.has('a')||keys.has('arrowleft'));
@@ -268,8 +284,9 @@ function tick(time) {
  updateCamera();
  const candidates=state.agents.map(agent=>({...agent,distance:Math.hypot(player.x-AGENT_SPOTS[agent.id].x,player.y-AGENT_SPOTS[agent.id].y)}));
  candidates.push({id:'tv',name:'la TV',distance:Math.hypot(player.x-1320,player.y-520)});
+ candidates.push({id:'cabinet',name:'el archivador',distance:Math.hypot(player.x-CABINET.approach.x,player.y-CABINET.approach.y)});
  nearest=candidates.filter(candidate=>candidate.distance<105).sort((a,b)=>a.distance-b.distance)[0]||null;
- $('#touch-interact').disabled=!nearest;$('#interact-label').textContent=nearest?(nearest.id==='tv'?'Ver la TV':'Hablar con '+nearest.name):'Acércate a una mesa';
+ $('#touch-interact').disabled=!nearest;$('#interact-label').textContent=nearest?(nearest.id==='cabinet'?'Abrir archivador':nearest.id==='tv'?'Ver la TV':'Hablar con '+nearest.name):'Acércate a una mesa';
  const lounge=player.x>1035;$('#zone-label').textContent=lounge?'SALA DE PROYECCIÓN':'OFICINA CREATIVA';$('#go-lounge').classList.toggle('active',lounge);$('#go-work').classList.toggle('active',!lounge);
  frame=requestAnimationFrame(tick);
 }
@@ -288,7 +305,7 @@ function gestureStart(){
  else if(points.length===2)gesture={pinch:Math.hypot(points[0].x-points[1].x,points[0].y-points[1].y),zoom:camera.zoom,moved:true};
 }
 viewport.addEventListener('pointerdown',event=>{
- if(event.target.closest('button,video,[data-office-agent]'))return;
+ if(event.target.closest('button,video,[data-office-agent],[role="button"]'))return;
  viewport.setPointerCapture(event.pointerId);pointers.set(event.pointerId,localPoint(event));gestureStart();viewport.focus({preventScroll:true});
 });
 viewport.addEventListener('pointermove',event=>{
@@ -305,7 +322,7 @@ viewport.addEventListener('pointercancel',()=>{pointers.clear();gesture=null;});
 viewport.addEventListener('wheel',event=>{event.preventDefault();setZoom(camera.zoom*Math.exp(-event.deltaY*.0015),localPoint(event));},{passive:false});
 const movement=['w','a','s','d','arrowup','arrowleft','arrowdown','arrowright'];
 window.addEventListener('keydown',event=>{
- const modalOpen=$('#media-viewer').open||$('#upload-dialog').open||$('#usage-dialog').open;
+ const modalOpen=$('#media-viewer').open||$('#upload-dialog').open||$('#usage-dialog').open||$('#projects-dialog').open||$('#voice-dialog').open;
  if(event.key==='Escape'&&state.open&&!modalOpen){event.preventDefault();closeChat();return;}
  if(event.key==='Tab'&&!desktop.matches&&state.open&&!modalOpen){const focusable=[...$('#chat-panel').querySelectorAll('button:not(:disabled),textarea,input,select')].filter(el=>el.getClientRects().length);const first=focusable[0],last=focusable.at(-1);if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}}
  if(event.target.closest('input,textarea,select,button')||modalOpen)return;
@@ -321,6 +338,6 @@ for(const button of document.querySelectorAll('[data-direction]')) {
  button.addEventListener('click',()=>{if(performance.now()-downAt<180||downAt===0){const offsets={up:[0,-60],down:[0,60],left:[-60,0],right:[60,0]};const[dx,dy]=offsets[button.dataset.direction];walkTo({x:player.x+dx,y:player.y+dy});}});
 }
 panelVisibility();frame=requestAnimationFrame(tick);
-try{await refresh();state.connected=true;renderConnection();addEvent('runtime.ready');connectEvents();if(state.mode==='real')refreshUsage();}
+try{await refresh();state.connected=true;renderConnection();addEvent('runtime.ready');connectEvents();if(state.mode==='real'){refreshUsage();await voice.initialize();}}
 catch(error){state.connected=false;renderConnection();status(error.message);}
 window.addEventListener('pagehide',()=>{stream?.close();clearInterval(usageTimer);cancelAnimationFrame(frame);keys.clear();document.querySelectorAll('video').forEach(video=>video.pause());});

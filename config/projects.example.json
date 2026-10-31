@@ -2,8 +2,41 @@
   "schemaVersion": 1,
   "note": "Plantilla del estudio, NO configuración nativa de Hermes. Copiar a projects.local.json y resolver rutas explícitamente antes de habilitar herramientas.",
   "projects": [
-    { "id": "studio", "name": "Hermes Game Studio", "enabled": false, "root": null, "engine": "web", "writePolicy": "dedicated-worktree" },
-    { "id": "juego-a", "name": "Juego A", "enabled": false, "root": null, "engine": null, "writePolicy": "dedicated-worktree" },
-    { "id": "juego-b", "name": "Juego B", "enabled": false, "root": null, "engine": null, "writePolicy": "dedicated-worktree" }
+    {
+      "id": "juego-a",
+      "name": "Juego A",
+      "enabled": false,
+      "root": null,
+      "engine": null,
+      "writePolicy": "dedicated-worktree",
+      "workspace": null,
+      "permissions": "read",
+      "agents": [
+        "atlas",
+        "pixel",
+        "prisma",
+        "ux",
+        "nodo",
+        "lupa"
+      ]
+    },
+    {
+      "id": "juego-b",
+      "name": "Juego B",
+      "enabled": false,
+      "root": null,
+      "engine": null,
+      "writePolicy": "dedicated-worktree",
+      "workspace": null,
+      "permissions": "read",
+      "agents": [
+        "atlas",
+        "pixel",
+        "prisma",
+        "ux",
+        "nodo",
+        "lupa"
+      ]
+    }
   ]
 }

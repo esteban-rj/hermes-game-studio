@@ -6,11 +6,12 @@ import { makeDemo, InputError } from './lib/demo.mjs';
 import { makeHermes } from './lib/hermes.mjs';
 import { makeMedia, MAX_MEDIA_BYTES, byteRange } from './lib/media.mjs';
 import { makeCodexUsage } from './lib/codex-usage.mjs';
+import { makeVoice, MAX_VOICE_BYTES } from './lib/voice.mjs';
 
 const root = path.dirname(fileURLToPath(import.meta.url));
 const publicRoot = path.join(root, 'public');
 const types = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.json': 'application/json; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png' };
-export function createStudioServer({ port = 4317, runtime, media, usage } = {}) {
+export function createStudioServer({ port = 4317, runtime, media, usage, voice } = {}) {
   if (!runtime) throw new Error('Se requiere un runtime explícito. El inicio normal usa Hermes real.');
   const demo = runtime;
   const streams = new Set();
@@ -22,13 +23,20 @@ export function createStudioServer({ port = 4317, runtime, media, usage } = {}) 
     if (origin && origin !== `http://${host}`) { res.writeHead(403); res.end('Origen rechazado'); return; }
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Referrer-Policy', 'no-referrer');
+    res.setHeader('Permissions-Policy','microphone=(self), camera=()');
     res.setHeader('Cache-Control', 'no-store');
-    res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'");
+    res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self' blob:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'");
     function json(status, data) { res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' }); res.end(JSON.stringify(data)); }
     try {
       const url = new URL(req.url, `http://${host}`);
-      if (req.method === 'GET' && url.pathname === '/api/health') return json(200, { ok: true, mode: demo.snapshot().mode, version: '0.4.0' });
-      if (req.method === 'GET' && url.pathname === '/api/studio') return json(200, demo.snapshot());
+      if (req.method === 'GET' && url.pathname === '/api/health') return json(200, { ok: true, mode: demo.snapshot().mode, version: '0.6.0' });
+      if (req.method === 'GET' && url.pathname === '/api/studio') { await demo.refreshProjects?.(); const state=demo.snapshot(url.searchParams.get('projectId') || 'studio');if(state.mode==='real')state.capabilities.voice=Boolean(voice?.capabilities().available);return json(200,state); }
+      if(req.method==='GET'&&url.pathname==='/api/voice')return json(200,voice?.capabilities()||{available:false,voices:[],reason:'Audio local no configurado.'});
+      if(req.method==='POST'&&url.pathname==='/api/voice/transcribe'){
+        if(!voice?.capabilities().available||demo.snapshot().mode!=='real')throw new InputError('Voz local no disponible.',503);
+        const chunks=[];let size=0;for await(const chunk of req){size+=chunk.length;if(size>MAX_VOICE_BYTES)throw new InputError('Audio mayor de 3 MB.',413);chunks.push(chunk);}
+        return json(200,await voice.transcribe(Buffer.concat(chunks),req.headers['content-type']));
+      }
       if (req.method === 'GET' && url.pathname === '/api/codex-usage') {
         if (!usage || demo.snapshot().mode !== 'real') return json(503, {error:'Uso de Codex no disponible.'});
         return json(200, await usage.get({force:url.searchParams.get('refresh')==='1'}));
@@ -87,6 +95,10 @@ export function createStudioServer({ port = 4317, runtime, media, usage } = {}) 
         }
         let input;
         try { input = JSON.parse(body); } catch { throw new InputError('JSON inválido.'); }
+        if(url.pathname==='/api/voice/speak'){
+          if(!voice?.capabilities().available||demo.snapshot().mode!=='real')throw new InputError('Voz local no disponible.',503);
+          const bytes=await voice.speak(input);res.writeHead(200,{'Content-Type':'audio/wav','Content-Length':bytes.length});res.end(bytes);return;
+        }
         if (url.pathname === '/api/messages') return json(200, await demo.message(input));
         if (demo.snapshot().mode === 'real') throw new InputError('Esta operación aún no está conectada a Hermes.', 409);
         if (url.pathname === '/api/tasks') return json(201, { task: demo.createTask(input), mode: 'demo' });
@@ -125,9 +137,10 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const media = mode === 'real' ? await makeMedia({ root }) : null;
   const runtime = mode === 'real' ? await makeHermes({ root, media }) : makeDemo();
   const usage = mode === 'real' ? makeCodexUsage() : null;
-  const { server, closeStreams } = createStudioServer({ port, runtime, media, usage });
+  const voice = mode === 'real' ? await makeVoice({root}) : null;
+  const { server, closeStreams } = createStudioServer({ port, runtime, media, usage, voice });
   server.listen(port, '127.0.0.1', () => console.log(`Hermes Game Studio ${mode.toUpperCase()} · http://127.0.0.1:${port}\n${runtime.snapshot().notice}`));
-  function stop() { closeStreams(); server.close(); }
+  function stop() { voice?.close(); closeStreams(); server.close(); }
   process.on('SIGINT', stop);
   process.on('SIGTERM', stop);
   server.on('error', error => { console.error(error.message); process.exitCode = 1; });

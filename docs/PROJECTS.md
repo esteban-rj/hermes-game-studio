@@ -89,3 +89,41 @@ permisos de tu usuario de Windows. Esta preparación es para uso CLI supervisado
 la oficina sigue sin ejecutar herramientas. El puente y un sandbox verificado
 siguen siendo necesarios antes de permitir trabajo autónomo desde la UI.
 [Alcance de perfiles Hermes](https://hermes-agent.nousresearch.com/docs/user-guide/profiles).
+
+
+## Archivador y acceso desde la oficina (v0.5)
+
+El servidor lee `.runtime/projects.local.json`, un registro privado. Cada
+entrada habilitada indica `id`, `name`, `root` (carpeta original),
+`workspace` (worktree separado), `enabled`, `agents` y `permissions`
+(`read` o `read-write`). Ver la plantilla pública sin rutas reales.
+Se pueden registrar IDs adicionales, con letras minúsculas, números y guiones.
+
+El usuario eligió worktrees desde el último commit: los cambios sin confirmar de
+la carpeta original no se trasladan. La preparación usa ramas `codex/office-<id>`.
+El archivador muestra ambas rutas, commit y cantidad de cambios excluidos al
+crearlo. Un worktree ausente o un proyecto deshabilitado no se puede seleccionar.
+
+`lib/projects.mjs` comprueba el acceso en cada llamada MCP. Bloquea rutas
+absolutas/externas, traversal, enlaces, archivos con hardlinks, credenciales,
+metadatos Git y directorios de caché conocidos. Sólo acepta texto UTF-8 acotado.
+No habilita comandos arbitrarios. Git sólo recibe verbos fijos de lectura, sin
+fsmonitor, diff externo, textconv, submódulos o red. Las ediciones comprueban el
+hash previo y conservan un original bajo `.runtime/project-backups/`.
+
+Hermes usa su integración MCP nativa con el servidor Node
+`scripts/project-mcp.mjs`. Los perfiles `office-<proyecto>-<agente>` reciben
+`todo,memory,workspace`. El SOUL privado contiene la raíz autorizada; se
+comparte OAuth por el mecanismo nativo de Hermes, sin copiar tokens. El home
+por proyecto mantiene memorias y sesiones separadas; cambiar de proyecto en la
+UI también cambia el historial mostrado. La conversación general conoce el
+catálogo, pero no tiene herramientas de archivos.
+
+La restricción se aplica en estas herramientas; no equivale a aislar todo el
+proceso de Hermes mediante un sandbox del sistema operativo. No se habilitan
+terminal, builds, commits, push, borrado ni control de escritorio. Para añadir
+esas operaciones hace falta un ejecutor con permisos propios.
+
+Las secciones anteriores describen la preparación CLI manual. Su advertencia
+sobre falta de herramientas en la oficina corresponde a la versión anterior;
+el puente MCP acotado de esta sección es ahora la vía para trabajar desde la UI.

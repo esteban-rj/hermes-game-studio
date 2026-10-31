@@ -1,7 +1,9 @@
+import { animeHead } from './anime-heads.js';
 // Self-contained, resolution-independent characters. Only the known presets below
 // enter the markup; callers may safely insert the result into an SVG element.
 const ink = '#26334b';
 const presets = {
+  lina: { skin:'#c69376',shade:'#a66e58',hair:'#665074',shirt:'#aa80ba',light:'#e4c3ef',pants:'#424c64',shoes:'#323b50' },
   atlas: { skin: '#d9a77d', shade: '#bd835e', hair: '#43354f', shirt: '#8a74d8', light: '#bba9f1', pants: '#494967', shoes: '#33364e' },
   pixel: { skin: '#a86f52', shade: '#865139', hair: '#253349', shirt: '#578cde', light: '#9ec8ff', pants: '#344562', shoes: '#28364e' },
   prisma: { skin: '#efbb9c', shade: '#d79879', hair: '#9d4d46', shirt: '#ec817e', light: '#ffd0b8', pants: '#73596f', shoes: '#493e59' },
@@ -29,32 +31,7 @@ function sleepLetters(p) {
   return `<g class="sprite-sleep-letters" fill="none" stroke="${p.light}" stroke-width="2.7"><path class="sprite-sleep-z sprite-sleep-z-one" d="M17-91h7l-7 8h7"/><path class="sprite-sleep-z sprite-sleep-z-two" d="M23-105h8l-8 9h8"/><path class="sprite-sleep-z sprite-sleep-z-three" d="M28-120h9l-9 10h9"/></g>`;
 }
 
-function head(id, p) {
-  const rearHair = id === 'prisma'
-    ? `<path d="M-17-82c-7 13-8 27-2 36l8-3 12-1 17 2c4-14 4-24-3-35Z" fill="${p.hair}"/>`
-    : id === 'ux' ? `<path d="M-18-80c-5 6-5 19 0 26l6-5 25 1 7-7-3-18Z" fill="${p.hair}"/><circle cx="15" cy="-93" r="8" fill="${p.hair}"/>` : '';
-  let hair = `<path d="M-18-77c-3-14 5-23 18-23 14 0 21 9 18 24l-4-8c-8 3-15 0-19-5-1 6-6 10-13 12Z" fill="${p.hair}"/>`;
-  if (id === 'atlas') hair = `<path d="M-18-78c-4-16 4-23 17-23 10 0 20 7 19 21l-5-8-9 2-8-5-5 8Z" fill="${p.hair}"/><path d="m-9-95 7-2 8 3" fill="none" stroke="#796789" stroke-width="2" stroke-linecap="round"/>`;
-  if (id === 'pixel') hair = `<path d="M-18-78c-3-12 2-22 15-23l-2-4 10 4 7 1c9 4 9 13 7 23l-5-10-7-2-10 4-7-2Z" fill="${p.hair}"/>`;
-  if (id === 'ux') hair = `<path d="M-18-76c-3-15 3-23 17-23 14 0 22 8 19 23l-5-7c-10 1-14-4-16-7-3 7-8 10-15 14Z" fill="${p.hair}"/><path d="M9-95c3 2 4 5 4 9" stroke="#51717d" stroke-width="2" fill="none" stroke-linecap="round"/>`;
-  if (id === 'nodo') hair = `<path d="M-18-77c-3-15 6-23 18-23s21 9 18 23l-5-9-4-1c-7 3-14 1-18-2l-4 9Z" fill="${p.hair}"/><path d="m-9-94 10-2 10 4" stroke="#977868" stroke-width="2" fill="none" stroke-linecap="round"/>`;
-  if (id === 'lupa') hair = `<path d="M-18-76c-4-9-2-19 4-22 7-9 23-6 29 1 6 5 6 12 3 21l-5-10c-10 3-14 1-20-3l-6 10Z" fill="${p.hair}"/><circle cx="-11" cy="-99" r="5" fill="${p.hair}"/><circle cx="0" cy="-102" r="5" fill="${p.hair}"/><circle cx="11" cy="-99" r="5" fill="${p.hair}"/>`;
-  if (id === 'prisma') hair = `<path d="M-18-76c-3-14 4-24 18-24 13 0 20 9 18 22l-6-9c-8 5-16 4-20 1-2 5-5 8-10 10Z" fill="${p.hair}"/><path d="M-21-94c0-8 13-12 24-10 10 1 17 7 15 13l-33 2Z" fill="#b95b68"/><path d="m-1-104 3-5" stroke="#864154" stroke-width="3" stroke-linecap="round"/><path d="M-17-92c10 3 22 2 32-1" stroke="#f19795" stroke-width="2" fill="none" stroke-linecap="round"/>`;
-  const glasses = ['atlas', 'player'].includes(id)
-    ? `<g fill="#dff2f2" fill-opacity=".2" stroke="${ink}" stroke-width="1.8"><rect x="-14" y="-78" width="12" height="9" rx="3.5"/><rect x="2" y="-78" width="12" height="9" rx="3.5"/><path d="M-2-74h4m-19-1h3m28 0h3" fill="none"/></g>` : '';
-  const beard = id === 'player' ? `<path d="M-15-70c3 3 4 4 6 4 6-3 13-3 18 0l6-4c-1 10-7 16-15 16s-14-6-15-16Z" fill="${p.hair}"/><path d="M-5-63q5 3 10 0" fill="none" stroke="#f1b59a" stroke-width="1.5" stroke-linecap="round"/>` : `<path d="M-4-63q4 3 8 0" fill="none" stroke="#8c514b" stroke-width="1.5" stroke-linecap="round"/>`;
-  const headphones = id === 'pixel' ? `<path d="M-21-77v-7c0-13 9-20 21-20s22 8 22 21v6" fill="none" stroke="#2c456c" stroke-width="5"/><path d="M-21-85c0-10 8-17 21-17s20 7 21 17" fill="none" stroke="#aacdf7" stroke-width="2"/><rect x="-24" y="-83" width="8" height="16" rx="4" fill="#436cad"/><rect x="16" y="-83" width="8" height="16" rx="4" fill="#436cad"/><path d="M20-70q-1 8-12 8" fill="none" stroke="#2c456c" stroke-width="2"/><circle cx="7" cy="-62" r="2.5" fill="#a6d5ff"/>` : '';
-  return `${rearHair}<path d="M-5-61h10v12H-5Z" fill="${p.skin}"/><path d="M-5-61h10v5q-5 4-10 0Z" fill="${p.shade}"/>
-  <ellipse cx="-17" cy="-74" rx="4" ry="6" fill="${p.skin}"/><ellipse cx="17" cy="-74" rx="4" ry="6" fill="${p.skin}"/>
-  <path d="M-18-83c0-12 8-17 18-17s18 5 18 17v10c0 12-8 20-18 20s-18-8-18-20Z" fill="${p.skin}"/>
-  <path d="M-16-71c1 8 5 14 11 16-9-1-13-8-13-17v-10l3-4Z" fill="${p.shade}" opacity=".35"/>
-  ${hair}<g class="sprite-eyes" fill="${ink}"><ellipse cx="-8" cy="-74" rx="1.8" ry="2.5"/><ellipse cx="8" cy="-74" rx="1.8" ry="2.5"/></g>
-  ${id === 'player' ? '' : `<path class="sprite-closed-eyes" d="M-12-74q4 4 8 0m8 0q4 4 8 0" fill="none" stroke="${ink}" stroke-width="1.8"/>`}
-  <path d="m-12-81 6-1m12 0 6 1" stroke="${p.hair}" stroke-width="1.8" stroke-linecap="round"/>
-  <path d="m0-73-2 6 3 1" fill="none" stroke="${p.shade}" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
-  <ellipse cx="-11" cy="-67" rx="3" ry="1.6" fill="#e88b83" opacity=".32"/><ellipse cx="11" cy="-67" rx="3" ry="1.6" fill="#e88b83" opacity=".32"/>
-  ${beard}${glasses}${headphones}`;
-}
+function head(id, p) { return animeHead(id, p); }
 
 function outfit(id, p) {
   const collar = id === 'atlas' ? `<path d="m-6-51 6 7 6-7 4 2-6 10-4-5-4 5-6-10Z" fill="#f0eaff"/><path d="M0-43v15" stroke="#5d4d9e" stroke-width="1.3"/><circle cx="3" cy="-35" r="1" fill="#eee8ff"/>`
@@ -72,7 +49,7 @@ function outfit(id, p) {
 function armsAndTools(id, p, portrait) {
   const left = `<g class="sprite-arm sprite-arm-left"><path d="M-18-46q-7 7-6 15l9 6 4-7-5-3 4-7" fill="${p.shirt}"/><path d="m-17-34 6 3c3 1 3 6 0 7-3 1-8-2-9-3Z" fill="${p.skin}"/></g>`;
   const right = `<g class="sprite-arm sprite-arm-right"><path d="M18-46q7 7 6 15l-9 6-4-7 5-3-4-7" fill="${p.shirt}"/><path d="m17-34-6 3c-3 1-3 6 0 7 3 1 8-2 9-3Z" fill="${p.skin}"/></g>`;
-  if (portrait || id === 'player') return left + right;
+  if (portrait || id === 'player' || id === 'lina') return left + right;
   if (id === 'atlas') return `${left}<g class="sprite-tool"><path d="m-13-39 13-3 14 3 2 20-15-3-13 3Z" fill="#ece7ff" stroke="#665993" stroke-width="1.3" stroke-linejoin="round"/><path d="m0-42 1 20" stroke="#b1a2d8" stroke-width="1.2"/><path d="m-9-35 5-1 1 7-5 2m13-9 5 2-1 4-5-1m-8 7 4-2" fill="none" stroke="#9a85c8" stroke-width="1.2" stroke-linecap="round"/><path d="M5-28h4m-2-2v4" stroke="#b68cd9" stroke-width="1.2"/></g><g class="sprite-arm sprite-arm-right"><path d="M18-46q8 8 5 16l-9 4-3-7 6-3-5-6" fill="${p.shirt}"/><ellipse cx="14" cy="-29" rx="4" ry="3.5" fill="${p.skin}"/></g>`;
   if (id === 'pixel') return `${left}<g class="sprite-tool"><path d="M-15-40h29l-2 17h-25Z" fill="#2c4565" stroke="#9dc6f2" stroke-width="1.1" stroke-linejoin="round"/><path d="m-11-36 21 0-1 9h-19Z" fill="#436083"/><path d="m-7-33-3 2 3 2m8-4 3 2-3 2m-4-5-2 6" stroke="#9fe1db" stroke-width="1.1" fill="none" stroke-linecap="round"/><path d="M-17-23h33l-3 3h-27Z" fill="#99b9d9"/></g><g class="sprite-arm sprite-arm-right"><path d="M18-46q9 9 4 16l-13 6-3-6 11-5-5-7" fill="${p.shirt}"/><ellipse cx="7" cy="-27" rx="5" ry="3" fill="${p.skin}"/></g>`;
   if (id === 'prisma') return `<g class="sprite-arm sprite-arm-left"><path d="M-18-46q-8 10-3 16l9 2 2-7-6-2 4-5" fill="${p.shirt}"/><ellipse cx="-11" cy="-32" rx="5" ry="3" fill="${p.skin}"/></g><g class="sprite-tool sprite-palette"><path d="M-19-33c-7 0-10 6-7 11 3 6 17 7 23 2 4-4 0-6-3-7-3-2-3-6-7-6Z" fill="#f4d4a4" stroke="#b98f76" stroke-width="1"/><ellipse cx="-10" cy="-25" rx="2.6" ry="2" fill="#a97859"/><circle cx="-20" cy="-27" r="2" fill="#ed8782"/><circle cx="-20" cy="-21" r="2" fill="#6db5c4"/><circle cx="-14" cy="-20" r="2" fill="#a18cd6"/></g><g class="sprite-arm sprite-arm-right"><path d="M18-46q8 8 5 15l-6 3-4-6 4-3-5-5" fill="${p.shirt}"/><ellipse cx="19" cy="-31" rx="4" ry="3.5" fill="${p.skin}"/><g class="sprite-brush"><path d="m20-30 6-19" stroke="#805c62" stroke-width="2.4" stroke-linecap="round"/><path d="m25-46 2-6" stroke="#c8d3dd" stroke-width="3"/><path d="M26-51c-3-5 1-7 3-10 3 5 3 8-1 11Z" fill="#edb37f"/><path d="m28-58 1-3 1 4" fill="#b382cc"/></g></g>`;
@@ -86,7 +63,7 @@ export function characterMarkup(id, { portrait = false, activity = 'idle' } = {}
   const key = Object.hasOwn(presets, id) ? id : 'player';
   const p = presets[key];
   const isAgent = key !== 'player';
-  const activityClass = isAgent ? (activity === 'working' ? ' is-working' : ' is-sleeping') : '';
+  const activityClass = isAgent && activity !== 'portrait' ? (activity === 'working' ? ' is-working' : ' is-sleeping') : '';
   const body = isAgent
     ? `<g class="sprite-standing-legs">${legs(p)}</g>${seatedLegs(p)}<g class="sprite-body">${outfit(key, p)}<g class="sprite-head">${head(key, p)}</g><g class="sprite-work-arms">${armsAndTools(key, p, false)}</g>${sleepingArms(p)}</g>${sleepLetters(p)}`
     : `${legs(p)}<g class="sprite-body">${outfit(key, p)}${head(key, p)}${armsAndTools(key, p, portrait)}</g>`;

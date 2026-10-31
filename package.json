@@ -1,10 +1,12 @@
 {
   "name": "hermes-game-studio",
-  "version": "0.4.0",
+  "version": "0.6.0",
   "private": true,
   "type": "module",
-  "description": "Oficina nocturna con agentes Hermes trabajando o durmiendo y TV de uso real de Codex.",
-  "engines": { "node": ">=22" },
+  "description": "Oficina anime con agentes Hermes, proyectos locales y central de voz privada.",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "start": "node server.mjs",
     "test": "node --test",
